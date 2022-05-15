@@ -1,6 +1,7 @@
 import socket
 import time
 import threading
+import random
 
 HEADER = 64
 SERVERIP = socket.gethostbyname(socket.gethostname())
@@ -11,6 +12,9 @@ GAMESTARTED_MESSAGE = "Game Already Started"
 ImageSend_Message = "Incoming Image"
 ASKFORDISCONNECT_MESSAGE = "Exit Game"
 PLAYERNAME_MESSAGE = "Player Name:"
+QUESTION_MESSAGE = "Question: "
+ANSWERDIVIDER_MESSAGE ="!!!"
+QUESTIONHASIMAGE_MESSAGE = "!IMAGE "
 SERVERADDR = (SERVERIP, SERVERPORT)
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 questionPath = r"dist\questions.txt"
@@ -42,6 +46,7 @@ def recieveMessageFromConnection(connection):
         return receivedMessage
 
 class QuestionList:
+    
     def __init__(self, qpath):
         self.qList=[]
         qfile=open(qpath, "r")
@@ -60,13 +65,14 @@ class QuestionList:
             
             for i in range(4):
                 line = qfile.readline()
-                newQ.append(line)
+                newQ.append(line.strip())
             self.qList.append(Question(newQ, newQhasImage, newQImagePath))
             line = qfile.readline()
         qfile.close()
 
 
 class Question:
+    
     def __init__(self, qnaList, hasImage, imagepath):
         self.Question = qnaList[0]
         self.Answers=[]
@@ -74,6 +80,10 @@ class Question:
             self.Answers.append(qnaList[i+1])
         self.hasImage = hasImage
         self.imagepath = imagepath
+
+    def getAnswersInRandom(self):
+        shuffledAnswers = random.sample(self.Answers, len(self.Answers))
+        return shuffledAnswers
 
 class PlayerList:
 
@@ -98,6 +108,7 @@ class Player:
         self.playerAddress = Address
         self.playerName = Name
         self.playerID = f"{self.playerName}[{self.playerAddress[0]}{self.playerAddress[1]}]"
+        self.playerColor = "%06x" % random.randint(0, 0xFFFFFF)
         self.listeningThread = threading.Thread(target=self.Listen, daemon=True, args=())
         self.connected = True
         self.startListening()
@@ -176,11 +187,15 @@ while not start:
 
 time.sleep(5)
 
-playerList.sendAllPlayers("Hewwo")
+for loopquestion in questionList.qList:
 
-time.sleep(5)
+    shuffledAnswers = loopquestion.getAnswersInRandom()
+    
+    if loopquestion.hasImage:
+        playerList.sendAllPlayers(QUESTION_MESSAGE + QUESTIONHASIMAGE_MESSAGE + loopquestion.Question + ANSWERDIVIDER_MESSAGE + shuffledAnswers[0] + ANSWERDIVIDER_MESSAGE + shuffledAnswers[1] + ANSWERDIVIDER_MESSAGE + shuffledAnswers[2] + ANSWERDIVIDER_MESSAGE + shuffledAnswers[3])
+    else:
+        playerList.sendAllPlayers(QUESTION_MESSAGE + loopquestion.Question + ANSWERDIVIDER_MESSAGE + shuffledAnswers[0] + ANSWERDIVIDER_MESSAGE + shuffledAnswers[1] + ANSWERDIVIDER_MESSAGE + shuffledAnswers[2] + ANSWERDIVIDER_MESSAGE + shuffledAnswers[3])
 
-playerList.disconnectAllPlayers()
+playerList.sendAllPlayers(DISCONNECT_MESSAGE)
 
-time.sleep(150)
-server.close()
+time.sleep(1)

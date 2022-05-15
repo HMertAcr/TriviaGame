@@ -143,7 +143,10 @@ window.iconbitmap(default=ICONPATH)
 
 def on_closing():
       if(connected):
-         sendMessageToServer(DISCONNECT_MESSAGE)
+         try:
+            sendMessageToServer(DISCONNECT_MESSAGE)
+         except:
+            pass
       window.destroy()
       exit
 
@@ -176,10 +179,10 @@ questionText.place(x=10, y=15)
 questionImage.place(x=580, y=15)
 
 
-ans1button = tkinter.Button(answerFrame, text="ans1button", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
-ans2button = tkinter.Button(answerFrame, text="ans2button", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
-ans3button = tkinter.Button(answerFrame, text="ans3button", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
-ans4button = tkinter.Button(answerFrame, text="ans4button", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
+ans1button = tkinter.Button(answerFrame, bg="#e51537", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
+ans2button = tkinter.Button(answerFrame, bg="#0565d1", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
+ans3button = tkinter.Button(answerFrame, bg="#d99f00", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
+ans4button = tkinter.Button(answerFrame, bg="#229000", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
 
 ans1button.place(x=50, y=25)
 ans2button.place(x=450, y=25)
