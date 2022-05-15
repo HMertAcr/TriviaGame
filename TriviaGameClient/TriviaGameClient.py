@@ -22,6 +22,13 @@ def addToNetworkInfo(info):
       networkInfo.config(state=tkinter.DISABLED)
       window.update_idletasks()
 
+def addToNetworkInfoWithColor(info, color):
+      networkInfo.config(state=tkinter.NORMAL)
+      networkInfo.tag_config("colored", foreground=color)
+      networkInfo.insert(tkinter.END, info, "colored")
+      networkInfo.config(state=tkinter.DISABLED)
+      window.update_idletasks()
+
 def joinServer():
    global connected
    global PlayerName
