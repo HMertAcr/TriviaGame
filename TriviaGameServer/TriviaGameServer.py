@@ -13,8 +13,11 @@ ImageSend_Message = "Incoming Image"
 ASKFORDISCONNECT_MESSAGE = "Exit Game"
 PLAYERNAME_MESSAGE = "Player Name:"
 QUESTION_MESSAGE = "Question: "
-ANSWERDIVIDER_MESSAGE ="!!!"
+DIVIDER_MESSAGE ="!!!"
 QUESTIONHASIMAGE_MESSAGE = "!IMAGE "
+ANSWERTOQUESTION_MESSAGE = "!ANSWER: "
+QUESTIONCORRECT_MESSAGE = "!QCORRECT: "
+QUESTIONFALSE_MESSAGE = "!QFALSE: "
 SERVERADDR = (SERVERIP, SERVERPORT)
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 questionPath = r"dist\questions.txt"
@@ -54,12 +57,12 @@ class QuestionList:
         while line:
             newQ=[]
             line = qfile.readline()
-            if line.startswith("!image "):
-                newQ.append(line[7:])
+            if line.startswith(QUESTIONHASIMAGE_MESSAGE):
+                newQ.append(line[len(QUESTIONHASIMAGE_MESSAGE):].strip())
                 newQhasImage = True
                 newQImagePath = qfile.readline()
             else:
-                newQ.append(line)
+                newQ.append(line.strip())
                 newQhasImage = False
                 newQImagePath = ""
             
@@ -94,6 +97,10 @@ class PlayerList:
         for player in self.PList:
             player.sendMessage(msg)
     
+    def sendAllPlayersQuestion(self, question):
+        for player in self.PList:
+            player.sendQuestion(question)
+
     def disconnectAllPlayers(self):
         for player in self.PList:
             player.disconnect()
@@ -109,11 +116,12 @@ class Player:
         self.playerName = Name
         self.playerID = f"{self.playerName}[{self.playerAddress[0]}{self.playerAddress[1]}]"
         self.playerColor = "%06x" % random.randint(0, 0xFFFFFF)
+        self.currentQuestion = ""
+        self.score = 0
         self.listeningThread = threading.Thread(target=self.Listen, daemon=True, args=())
         self.connected = True
         self.startListening()
         self.messageList = []
-
 
     def startListening(self):
         self.listeningThread.start()
@@ -133,8 +141,16 @@ class Player:
                     print(f"{self.playerID} Disconnected From Server")
                     time.sleep(2)
                     break
-            
 
+                if receivedMessage.startswith(self, ANSWERTOQUESTION_MESSAGE):
+                    if isinstance(self.currentQuestion, Question):
+                        Answer = receivedMessage[len(ANSWERTOQUESTION_MESSAGE):]
+                        if Answer == self.currentQuestion.Answers[0]:
+                            self.score += 1
+                            self.sendMessage(QUESTIONCORRECT_MESSAGE)
+                        else:
+                            self.sendMessage(QUESTIONFALSE_MESSAGE)
+            
 
     def disconnect(self):
         self.sendMessage(ASKFORDISCONNECT_MESSAGE)
@@ -147,6 +163,20 @@ class Player:
     def sendImage(self, image):
         if self.connected:
             sendConnectionImage(image, self.playerConnection)
+
+    def sendQuestion(self, question):
+
+        shuffledAnswers = question.getAnswersInRandom()
+
+        self.currentQuestion = question
+
+        if question.hasImage:
+            playerList.sendAllPlayers(QUESTION_MESSAGE + QUESTIONHASIMAGE_MESSAGE + question.Question + DIVIDER_MESSAGE + shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
+        else:
+            playerList.sendAllPlayers(QUESTION_MESSAGE + question.Question + DIVIDER_MESSAGE + shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
+        
+
+
 
 
 
@@ -164,7 +194,7 @@ def listenForNewPlayers():
                 sendConnectionMessage(GAMESTARTED_MESSAGE, newPlayerConnection)
                 newPlayerConnection.close()
         except:
-            pass #there is no war in ba sing se
+            pass
 
 
 questionList = QuestionList(questionPath)
@@ -188,13 +218,8 @@ while not start:
 time.sleep(5)
 
 for loopquestion in questionList.qList:
-
-    shuffledAnswers = loopquestion.getAnswersInRandom()
-    
-    if loopquestion.hasImage:
-        playerList.sendAllPlayers(QUESTION_MESSAGE + QUESTIONHASIMAGE_MESSAGE + loopquestion.Question + ANSWERDIVIDER_MESSAGE + shuffledAnswers[0] + ANSWERDIVIDER_MESSAGE + shuffledAnswers[1] + ANSWERDIVIDER_MESSAGE + shuffledAnswers[2] + ANSWERDIVIDER_MESSAGE + shuffledAnswers[3])
-    else:
-        playerList.sendAllPlayers(QUESTION_MESSAGE + loopquestion.Question + ANSWERDIVIDER_MESSAGE + shuffledAnswers[0] + ANSWERDIVIDER_MESSAGE + shuffledAnswers[1] + ANSWERDIVIDER_MESSAGE + shuffledAnswers[2] + ANSWERDIVIDER_MESSAGE + shuffledAnswers[3])
+    playerList.sendAllPlayersQuestion(loopquestion)
+    time.sleep(10)
 
 playerList.sendAllPlayers(DISCONNECT_MESSAGE)
 

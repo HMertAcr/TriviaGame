@@ -1,4 +1,4 @@
-!image Question1:
+!IMAGE Question1:
 imagePath
 Q1 Correct Answ1
 Q1 False Answ1

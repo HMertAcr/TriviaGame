@@ -10,23 +10,35 @@ DISCONNECT_MESSAGE = "Disconnect"
 GAMESTARTED_MESSAGE = "Game Already Started"
 ImageSend_Message = "Incoming Image"
 ASKFORDISCONNECT_MESSAGE = "Exit Game"
+PLAYERNAME_MESSAGE = "Player Name:"
+QUESTION_MESSAGE = "Question: "
+DIVIDER_MESSAGE ="!!!"
+QUESTIONHASIMAGE_MESSAGE = "!IMAGE "
+ANSWERTOQUESTION_MESSAGE = "!ANSWER: "
 
 
 messagesReceived = []
 connected = False
 
-
-def addToNetworkInfo(info):
+def addToNetworkInfo(text):
       networkInfo.config(state=tkinter.NORMAL)
-      networkInfo.insert(tkinter.END, info)
+      networkInfo.insert(tkinter.END, text)
       networkInfo.config(state=tkinter.DISABLED)
       window.update_idletasks()
 
-def addToNetworkInfoWithColor(info, color):
+def addToNetworkInfoWithColor(text, color):
       networkInfo.config(state=tkinter.NORMAL)
       networkInfo.tag_config("colored", foreground=color)
-      networkInfo.insert(tkinter.END, info, "colored")
+      networkInfo.insert(tkinter.END, text, "colored")
       networkInfo.config(state=tkinter.DISABLED)
+      window.update_idletasks()
+
+
+def changeQuestionTextBox(text):
+      questionText.config(state=tkinter.NORMAL)
+      questionText.delete("1.0", tkinter.END)
+      questionText.insert(tkinter.END, text)
+      questionText.config(state=tkinter.DISABLED)
       window.update_idletasks()
 
 def joinServer():
@@ -119,6 +131,30 @@ def listenToServer():
                EnterInformationButton.config(state = tkinter.NORMAL)
                break
 
+            if receivedMessage.startswith(QUESTION_MESSAGE):
+               if receivedMessage.startswith(QUESTIONHASIMAGE_MESSAGE, len(QUESTION_MESSAGE)):
+                  qnaString = receivedMessage[len(QUESTION_MESSAGE) + len(QUESTIONHASIMAGE_MESSAGE):]
+                  hasImage = True
+                  imagepath = ""
+                  #somehow get image maybe
+               else:
+                  qnaString = receivedMessage[len(QUESTION_MESSAGE):]
+                  hasImage = False
+                  imagepath = ""
+
+               print("here1")
+               qnaList = qnaString.split(DIVIDER_MESSAGE) 
+               print("here2")              
+               changeQuestionTextBox(qnaList[0])
+               print("here3")
+               ans1button.config(text=qnaList[1])
+               ans2button.config(text=qnaList[2])
+               ans3button.config(text=qnaList[3])
+               ans4button.config(text=qnaList[4])
+
+
+
+
       except:
          pass
 
@@ -169,7 +205,8 @@ informationFrame.place(x=5*(windowWIDTH)/7, y=9*(windowHEIGHT)/10)
 networkFrame.place(x=5*(windowWIDTH)/7, y=0)
 
 
-questionText = tkinter.Text(questionFrame, width=70, height=22, state="disabled")
+questionText = tkinter.Text(questionFrame, width=70, height=22)
+questionText.config(state=tkinter.DISABLED)
 
 pixelVirtual = tkinter.PhotoImage(width=1, height=1)
 questionImage=tkinter.Label(questionFrame, image=pixelVirtual, width=280, height= 352)
