@@ -15,6 +15,8 @@ QUESTION_MESSAGE = "Question: "
 DIVIDER_MESSAGE ="!!!"
 QUESTIONHASIMAGE_MESSAGE = "!IMAGE "
 ANSWERTOQUESTION_MESSAGE = "!ANSWER: "
+ISANSWERCORRECT_MESSAGE = "!ISCORRECT: "
+GAMESTATS_MESSAGE = "!STATS: "
 
 
 messagesReceived = []
@@ -41,6 +43,24 @@ def changeQuestionTextBox(text):
       questionText.config(state=tkinter.DISABLED)
       window.update_idletasks()
 
+def answerChoosen(answer):
+
+   if answer == 1:
+      choosenAnswer = ans1button['text']
+   if answer == 2:
+      choosenAnswer = ans2button['text']
+   if answer == 3:
+      choosenAnswer = ans3button['text']
+   if answer == 4:
+      choosenAnswer = ans4button['text']
+
+   sendMessageToServer(ANSWERTOQUESTION_MESSAGE+choosenAnswer)
+   ans1button.config(text="", state="disabled")
+   ans2button.config(text="", state="disabled")
+   ans3button.config(text="", state="disabled")
+   ans4button.config(text="", state="disabled")
+
+   
 def joinServer():
    global connected
    global PlayerName
@@ -114,6 +134,11 @@ def listenToServer():
                connected = False
                addToNetworkInfo("Disconnected From Server \n")
                EnterInformationButton.config(state = tkinter.NORMAL)
+               changeQuestionTextBox("")
+               ans1button.config(text="", state="disabled")
+               ans2button.config(text="", state="disabled")
+               ans3button.config(text="", state="disabled")
+               ans4button.config(text="", state="disabled")
                break
             
             if receivedMessage == ASKFORDISCONNECT_MESSAGE:
@@ -122,6 +147,11 @@ def listenToServer():
                connected = False
                addToNetworkInfo("Disconnected From Server \n")
                EnterInformationButton.config(state = tkinter.NORMAL)
+               changeQuestionTextBox("")
+               ans1button.config(text="", state="disabled")
+               ans2button.config(text="", state="disabled")
+               ans3button.config(text="", state="disabled")
+               ans4button.config(text="", state="disabled")
                break
 
             if receivedMessage == GAMESTARTED_MESSAGE:
@@ -135,22 +165,51 @@ def listenToServer():
                if receivedMessage.startswith(QUESTIONHASIMAGE_MESSAGE, len(QUESTION_MESSAGE)):
                   qnaString = receivedMessage[len(QUESTION_MESSAGE) + len(QUESTIONHASIMAGE_MESSAGE):]
                   hasImage = True
-                  imagepath = ""
                   #somehow get image maybe
+                  questionImage.config(image=pixelVirtual)
+
                else:
                   qnaString = receivedMessage[len(QUESTION_MESSAGE):]
-                  hasImage = False
-                  imagepath = ""
+                  questionImage.config(image=pixelVirtual)
 
-               print("here1")
-               qnaList = qnaString.split(DIVIDER_MESSAGE) 
-               print("here2")              
+               qnaList = qnaString.split(DIVIDER_MESSAGE)
+
                changeQuestionTextBox(qnaList[0])
-               print("here3")
-               ans1button.config(text=qnaList[1])
-               ans2button.config(text=qnaList[2])
-               ans3button.config(text=qnaList[3])
-               ans4button.config(text=qnaList[4])
+
+               ans1button.config(text=qnaList[1], state="normal")
+               ans2button.config(text=qnaList[2], state="normal")
+               ans3button.config(text=qnaList[3], state="normal")
+               ans4button.config(text=qnaList[4], state="normal")
+
+            if receivedMessage.startswith(ISANSWERCORRECT_MESSAGE):
+               isAnswerCorrect = receivedMessage[len(ISANSWERCORRECT_MESSAGE):]
+               if isAnswerCorrect == "YES":
+
+                  changeQuestionTextBox("")
+
+                  ans1button.config(text="", state="disabled")
+                  ans2button.config(text="", state="disabled")
+                  ans3button.config(text="", state="disabled")
+                  ans4button.config(text="", state="disabled")
+
+                  questionImage.config(image=checkmarkimage)
+
+               if isAnswerCorrect == "NO":
+                  
+                  changeQuestionTextBox("")
+
+                  ans1button.config(text="", state="disabled")
+                  ans2button.config(text="", state="disabled")
+                  ans3button.config(text="", state="disabled")
+                  ans4button.config(text="", state="disabled")
+
+                  questionImage.config(image=crossimage)
+
+            if receivedMessage.startswith(GAMESTATS_MESSAGE):
+               gameStatsStr = receivedMessage[len(GAMESTATS_MESSAGE):]
+               gameStats = gameStatsStr.split(DIVIDER_MESSAGE)
+               changeQuestionTextBox(f"You came in {gameStats[0]}. place with {gameStats[1]} correct answers")
+               #ADD SOME FLAIR
 
 
 
@@ -164,6 +223,8 @@ windowHEIGHT=700
 ANSWERBUTTONHEIGHT = 6
 ANSWERBUTTONWIDTH = 45
 ICONPATH = r"dist\TriviaGameIcon.ico"
+CHECKMARKPATH = r"dist\checkMark.png"
+CROSSPATH = r"dist\cross.png"
 window = tkinter.Tk()
 window.geometry("{}x{}+50+50".format(windowWIDTH, windowHEIGHT))
 window.configure(bg="#141414")
@@ -172,8 +233,11 @@ window.attributes('-topmost', 1)
 window.attributes('-topmost', 0)
 window.title("Kahoot Client")
 
-photo = ImageTk.PhotoImage(Image.open(ICONPATH))
-window.iconphoto(False, photo)
+iconphotoimage = ImageTk.PhotoImage(Image.open(ICONPATH))
+checkmarkimage = ImageTk.PhotoImage(Image.open(CHECKMARKPATH))
+crossimage = ImageTk.PhotoImage(Image.open(CROSSPATH))
+pixelVirtual = tkinter.PhotoImage(width=1, height=1)
+window.iconphoto(False, iconphotoimage)
 window.iconbitmap(default=ICONPATH)
 
 
@@ -208,7 +272,6 @@ networkFrame.place(x=5*(windowWIDTH)/7, y=0)
 questionText = tkinter.Text(questionFrame, width=70, height=22)
 questionText.config(state=tkinter.DISABLED)
 
-pixelVirtual = tkinter.PhotoImage(width=1, height=1)
 questionImage=tkinter.Label(questionFrame, image=pixelVirtual, width=280, height= 352)
 
 
@@ -216,10 +279,10 @@ questionText.place(x=10, y=15)
 questionImage.place(x=580, y=15)
 
 
-ans1button = tkinter.Button(answerFrame, bg="#e51537", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
-ans2button = tkinter.Button(answerFrame, bg="#0565d1", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
-ans3button = tkinter.Button(answerFrame, bg="#d99f00", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
-ans4button = tkinter.Button(answerFrame, bg="#229000", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
+ans1button = tkinter.Button(answerFrame, command=lambda: answerChoosen(1), bg="#e51537", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
+ans2button = tkinter.Button(answerFrame, command=lambda: answerChoosen(2), bg="#0565d1", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
+ans3button = tkinter.Button(answerFrame, command=lambda: answerChoosen(3), bg="#d99f00", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
+ans4button = tkinter.Button(answerFrame, command=lambda: answerChoosen(4), bg="#229000", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
 
 ans1button.place(x=50, y=25)
 ans2button.place(x=450, y=25)

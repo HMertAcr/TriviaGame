@@ -16,8 +16,8 @@ QUESTION_MESSAGE = "Question: "
 DIVIDER_MESSAGE ="!!!"
 QUESTIONHASIMAGE_MESSAGE = "!IMAGE "
 ANSWERTOQUESTION_MESSAGE = "!ANSWER: "
-QUESTIONCORRECT_MESSAGE = "!QCORRECT: "
-QUESTIONFALSE_MESSAGE = "!QFALSE: "
+ISANSWERCORRECT_MESSAGE = "!ISCORRECT: "
+GAMESTATS_MESSAGE = "!STATS: "
 SERVERADDR = (SERVERIP, SERVERPORT)
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 questionPath = r"dist\questions.txt"
@@ -108,6 +108,20 @@ class PlayerList:
     def add(self, player):
         self.PList.append(player)
 
+    def sortByScores(self):
+        for i in range(len(self.PList)):
+            for j in range(len(self.PList)-i-1):
+                if self.PList[j].score < self.PList[j+1].score:
+                    self.PList[j], self.PList[j+1] = self.PList[j+1], self.PList[j]
+    
+    def sendPlayerScores(self):
+        self.sortByScores()
+        i = 1
+        #DO SOMETHING ABOUT TIES!!!
+        for player in self.PList:
+            player.sendMessage(GAMESTATS_MESSAGE + str(i) + DIVIDER_MESSAGE + str(player.score))
+            i = i + 1
+
 class Player:
 
     def __init__(self, Connection, Address, Name):
@@ -142,14 +156,15 @@ class Player:
                     time.sleep(2)
                     break
 
-                if receivedMessage.startswith(self, ANSWERTOQUESTION_MESSAGE):
+                if receivedMessage.startswith(ANSWERTOQUESTION_MESSAGE):
                     if isinstance(self.currentQuestion, Question):
                         Answer = receivedMessage[len(ANSWERTOQUESTION_MESSAGE):]
+                        print(f"{self.playerID} answered {Answer}")
                         if Answer == self.currentQuestion.Answers[0]:
-                            self.score += 1
-                            self.sendMessage(QUESTIONCORRECT_MESSAGE)
+                            self.score = self.score + 1
+                            self.sendMessage(ISANSWERCORRECT_MESSAGE+"YES")
                         else:
-                            self.sendMessage(QUESTIONFALSE_MESSAGE)
+                            self.sendMessage(ISANSWERCORRECT_MESSAGE+"NO")
             
 
     def disconnect(self):
@@ -171,9 +186,9 @@ class Player:
         self.currentQuestion = question
 
         if question.hasImage:
-            playerList.sendAllPlayers(QUESTION_MESSAGE + QUESTIONHASIMAGE_MESSAGE + question.Question + DIVIDER_MESSAGE + shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
+            self.sendMessage(QUESTION_MESSAGE + QUESTIONHASIMAGE_MESSAGE + question.Question + DIVIDER_MESSAGE + shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
         else:
-            playerList.sendAllPlayers(QUESTION_MESSAGE + question.Question + DIVIDER_MESSAGE + shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
+            self.sendMessage(QUESTION_MESSAGE + question.Question + DIVIDER_MESSAGE + shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
         
 
 
@@ -215,12 +230,22 @@ while not start:
         else:
             print("Enter only Y/N")
 
-time.sleep(5)
+if len(playerList.PList) > 0:
 
-for loopquestion in questionList.qList:
-    playerList.sendAllPlayersQuestion(loopquestion)
-    time.sleep(10)
+    for question in questionList.qList:
+        playerList.sendAllPlayersQuestion(question)
+        time.sleep(5)
 
-playerList.sendAllPlayers(DISCONNECT_MESSAGE)
+    playerList.sendPlayerScores()
 
-time.sleep(1)
+    time.sleep(5)
+
+    playerList.disconnectAllPlayers()
+
+    time.sleep(1)
+
+else:
+    
+    print("No Current Players")
+
+print("exited w no error")
