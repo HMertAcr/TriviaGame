@@ -247,7 +247,7 @@ def listenToServer():
 windowWIDTH=1225
 windowHEIGHT=700
 ANSWERBUTTONHEIGHT = 6
-ANSWERBUTTONWIDTH = 45
+ANSWERBUTTONWIDTH = 50
 ICONPATH = r"dist\TriviaGameIcon.ico"
 CHECKMARKPATH = r"dist\checkMark.png"
 CROSSPATH = r"dist\cross.png"
@@ -283,10 +283,10 @@ leftFrame = tkinter.Frame(window, bg="#141414", width=5*(windowWIDTH)/7, height=
 
 rightFrame = tkinter.Frame(window, bg="#141414", width=2*(windowWIDTH)/7, height=windowHEIGHT)
 
-questionFrame = tkinter.Frame(window, bg="red", width=5*(windowWIDTH)/7, height=4*(windowHEIGHT)/7)
-answerFrame =tkinter.Frame(window, bg="green", width=5*(windowWIDTH)/7, height=3*(windowHEIGHT)/7)
-networkFrame = tkinter.Frame(window, bg="blue", width=2*(windowWIDTH)/7, height=17*(windowHEIGHT)/20)
-informationFrame = tkinter.Frame(window, bg="purple", width=2*(windowWIDTH)/7, height=3*(windowHEIGHT)/20)
+questionFrame = tkinter.Frame(window, bg="#404040", width=5*(windowWIDTH)/7, height=4*(windowHEIGHT)/7)
+answerFrame =tkinter.Frame(window, bg="#171717", width=5*(windowWIDTH)/7, height=3*(windowHEIGHT)/7)
+networkFrame = tkinter.Frame(window, bg="#404040", width=2*(windowWIDTH)/7, height=17*(windowHEIGHT)/20)
+informationFrame = tkinter.Frame(window, bg="#404040", width=2*(windowWIDTH)/7, height=3*(windowHEIGHT)/20)
 
 
 questionFrame.place(x=0, y=0)
@@ -295,10 +295,10 @@ networkFrame.place(x=5*(windowWIDTH)/7, y=0)
 informationFrame.place(x=5*(windowWIDTH)/7, y=17*(windowHEIGHT)/20)
 
 
-questionText = tkinter.Text(questionFrame, width=70, height=22)
+questionText = tkinter.Text(questionFrame, width=70, height=22,bg="black",fg="white")
 questionText.config(state=tkinter.DISABLED)
 
-questionImage=tkinter.Label(questionFrame, image=pixelVirtual, width=280, height= 352)
+questionImage=tkinter.Label(questionFrame, image=pixelVirtual, width=280, height= 352,bg="black",fg="white")
 
 
 questionText.place(x=10, y=15)
@@ -317,35 +317,35 @@ ans4button.place(x=450, y=150)
 
 
 
-networkInfo = tkinter.Text(networkFrame, width=40, height=35 )
+networkInfo = tkinter.Text(networkFrame, width=40, height=35, fg="white", bg="black" )
 networkInfo.config(state=tkinter.DISABLED)
 
 networkInfo.place(x=10,y=15)
 
-PublicMessageLabel = tkinter.Label(informationFrame, text="Public Message:", width=20, height=1, bg="purple" ,anchor=tkinter.W)
+PublicMessageLabel = tkinter.Label(informationFrame, text="Public Message:", width=20, height=1, bg="#404040", anchor=tkinter.W, fg="white")
 EnterPublicMessage = tkinter.Entry(informationFrame, width=42)
 PublicMessageLabel.place(x=10, y=2)
 EnterPublicMessage.place(x=10, y=25)
 
-SendPublicMessageButton = tkinter.Button(informationFrame, text="send", command=sendPublicMessage, state="disabled",width=8, height=0)
+SendPublicMessageButton = tkinter.Button(informationFrame, text="send", command=sendPublicMessage, state="disabled", width=8, height=0)
 SendPublicMessageButton.place(x=270, y=22)
 
-NameLabel = tkinter.Label(informationFrame, text="Name:", width=5, height=1, bg="purple" ,anchor=tkinter.W)
+NameLabel = tkinter.Label(informationFrame, text="Name:", width=5, height=1, bg="#404040",anchor=tkinter.W, fg="white")
 EnterName = tkinter.Entry(informationFrame, width=16)
 NameLabel.place(x=10, y=47)
 EnterName.place(x=10, y=70)
 
-IPLabel = tkinter.Label(informationFrame, text= "Ip Adress:", width=8, height=1, bg="purple" ,anchor=tkinter.W)
+IPLabel = tkinter.Label(informationFrame, text= "Ip Adress:", width=8, height=1, bg="#404040",anchor=tkinter.W, fg="white")
 EnterIP = tkinter.Entry(informationFrame, width=16)
 IPLabel.place(x=112, y=47)
 EnterIP.place(x=112, y=70)
 
-PortLabel = tkinter.Label(informationFrame, text="Port:", width=5, height=1, bg="purple" ,anchor=tkinter.W)
+PortLabel = tkinter.Label(informationFrame, text="Port:", width=5, height=1, bg="#404040",anchor=tkinter.W, fg="white")
 EnterPort = tkinter.Entry(informationFrame, width=8)
 PortLabel.place(x=214, y=47)
 EnterPort.place(x=214, y=70)
 
-EnterInformationButton = tkinter.Button(informationFrame, text="join" , command=joinServer, width=8, height=0)
+EnterInformationButton = tkinter.Button(informationFrame, text="join", command=joinServer, width=8, height=0)
 EnterInformationButton.place(x=270, y=67)
 
 def main():
