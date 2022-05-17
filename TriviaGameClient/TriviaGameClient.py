@@ -144,7 +144,6 @@ def listenToServer():
                ans2button.config(text="", state="disabled")
                ans3button.config(text="", state="disabled")
                ans4button.config(text="", state="disabled")
-               questionImage.config(image=pixelVirtual)
                break
             
             if receivedMessage == ASKFORDISCONNECT_MESSAGE:
@@ -159,7 +158,6 @@ def listenToServer():
                ans2button.config(text="", state="disabled")
                ans3button.config(text="", state="disabled")
                ans4button.config(text="", state="disabled")
-               questionImage.config(image=pixelVirtual)
                break
 
             if receivedMessage == GAMESTARTED_MESSAGE:
@@ -228,7 +226,8 @@ def listenToServer():
 
                continue
                #ADD SOME FLAIR
-      except Exception:
+      except Exception as e:
+         print(e)
          server.close()
          connected = False
          addToNetworkInfo("Disconnected From Server \n")
@@ -239,7 +238,6 @@ def listenToServer():
          ans2button.config(text="", state="disabled")
          ans3button.config(text="", state="disabled")
          ans4button.config(text="", state="disabled")
-         questionImage.config(image=pixelVirtual)
          break
 
 
