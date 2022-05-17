@@ -26,21 +26,21 @@ def addToNetworkInfo(text):
       networkInfo.config(state=tkinter.NORMAL)
       networkInfo.insert(tkinter.END, text)
       networkInfo.config(state=tkinter.DISABLED)
-      window.update_idletasks()
+      clientWindow.update_idletasks()
 
 def addToNetworkInfoWithColor(text, color):
       networkInfo.config(state=tkinter.NORMAL)
       networkInfo.tag_config("colored" + networkInfo.index('end'), foreground=color)
       networkInfo.insert(tkinter.END, text, "colored" + networkInfo.index('end'))
       networkInfo.config(state=tkinter.DISABLED)
-      window.update_idletasks()
+      clientWindow.update_idletasks()
 
 def changeQuestionTextBox(text):
       questionText.config(state=tkinter.NORMAL)
       questionText.delete("1.0", tkinter.END)
       questionText.insert(tkinter.END, text)
       questionText.config(state=tkinter.DISABLED)
-      window.update_idletasks()
+      clientWindow.update_idletasks()
 
 def answerChoosen(answer):
 
@@ -251,20 +251,20 @@ ANSWERBUTTONWIDTH = 50
 ICONPATH = r"dist\TriviaGameIcon.ico"
 CHECKMARKPATH = r"dist\checkMark.png"
 CROSSPATH = r"dist\cross.png"
-window = tkinter.Tk()
-window.geometry("{}x{}+50+50".format(windowWIDTH, windowHEIGHT))
-window.configure(bg="#141414")
-window.resizable(False, False)
-window.attributes('-topmost', 1)
-window.attributes('-topmost', 0)
-window.title("TriviaGame Client")
+clientWindow = tkinter.Tk()
+clientWindow.geometry("{}x{}+50+50".format(windowWIDTH, windowHEIGHT))
+clientWindow.configure(bg="#141414")
+clientWindow.resizable(False, False)
+clientWindow.attributes('-topmost', 1)
+clientWindow.attributes('-topmost', 0)
+clientWindow.title("TriviaGame Client")
 
 iconphotoimage = ImageTk.PhotoImage(Image.open(ICONPATH))
 checkmarkimage = ImageTk.PhotoImage(Image.open(CHECKMARKPATH))
 crossimage = ImageTk.PhotoImage(Image.open(CROSSPATH))
 pixelVirtual = tkinter.PhotoImage(width=1, height=1)
-window.iconphoto(False, iconphotoimage)
-window.iconbitmap(default=ICONPATH)
+clientWindow.iconphoto(False, iconphotoimage)
+clientWindow.iconbitmap(default=ICONPATH)
 
 
 def on_closing():
@@ -273,20 +273,20 @@ def on_closing():
             sendMessageToServer(DISCONNECT_MESSAGE)
          except:
             pass
-      window.destroy()
+      clientWindow.destroy()
       exit
 
-window.protocol("WM_DELETE_WINDOW", on_closing)
+clientWindow.protocol("WM_DELETE_WINDOW", on_closing)
 
 
-leftFrame = tkinter.Frame(window, bg="#141414", width=5*(windowWIDTH)/7, height=windowHEIGHT)
+leftFrame = tkinter.Frame(clientWindow, bg="#141414", width=5*(windowWIDTH)/7, height=windowHEIGHT)
 
-rightFrame = tkinter.Frame(window, bg="#141414", width=2*(windowWIDTH)/7, height=windowHEIGHT)
+rightFrame = tkinter.Frame(clientWindow, bg="#141414", width=2*(windowWIDTH)/7, height=windowHEIGHT)
 
-questionFrame = tkinter.Frame(window, bg="#404040", width=5*(windowWIDTH)/7, height=4*(windowHEIGHT)/7)
-answerFrame =tkinter.Frame(window, bg="#171717", width=5*(windowWIDTH)/7, height=3*(windowHEIGHT)/7)
-networkFrame = tkinter.Frame(window, bg="#404040", width=2*(windowWIDTH)/7, height=17*(windowHEIGHT)/20)
-informationFrame = tkinter.Frame(window, bg="#404040", width=2*(windowWIDTH)/7, height=3*(windowHEIGHT)/20)
+questionFrame = tkinter.Frame(clientWindow, bg="#404040", width=5*(windowWIDTH)/7, height=4*(windowHEIGHT)/7)
+answerFrame =tkinter.Frame(clientWindow, bg="#171717", width=5*(windowWIDTH)/7, height=3*(windowHEIGHT)/7)
+networkFrame = tkinter.Frame(clientWindow, bg="#404040", width=2*(windowWIDTH)/7, height=17*(windowHEIGHT)/20)
+informationFrame = tkinter.Frame(clientWindow, bg="#404040", width=2*(windowWIDTH)/7, height=3*(windowHEIGHT)/20)
 
 
 questionFrame.place(x=0, y=0)
@@ -349,5 +349,6 @@ EnterInformationButton = tkinter.Button(informationFrame, text="join", command=j
 EnterInformationButton.place(x=270, y=67)
 
 def main():
-   window.mainloop()
+   clientWindow.mainloop()
+
 main()

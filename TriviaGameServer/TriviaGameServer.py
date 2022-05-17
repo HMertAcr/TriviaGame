@@ -2,6 +2,7 @@ import socket
 import time
 import threading
 import random
+import tkinter
 
 HEADER = 64
 SERVERIP = socket.gethostbyname(socket.gethostname())
@@ -24,9 +25,23 @@ server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 questionPath = r"dist\questions.txt"
 server.bind(SERVERADDR)
 
-global start
-start = False
+""" 
+windowWidth=400
+windowHeight=400
 
+serverWindow = tkinter.Tk()
+serverWindow.geometry("{}x{}+50+50".format(windowWidth, windowHeight))
+serverWindow.configure(bg="#141414")
+serverWindow.attributes('-topmost', 1)
+serverWindow.attributes('-topmost', 0)
+serverWindow.title("TriviaGame Server")
+
+
+
+serverWindow.mainloop() 
+"""
+
+start = False
 
 def sendConnectionMessage(msg, connection):
     encodedMsg = msg.encode(FORMAT)
