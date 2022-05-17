@@ -1,5 +1,6 @@
 # TriviaGame
-CMP2004 Project
+CMP2204 Project
+---------------
 To Do:
 fix/improve score placement
 create new window to announce placement on client
