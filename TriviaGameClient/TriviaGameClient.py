@@ -30,8 +30,8 @@ def addToNetworkInfo(text):
 
 def addToNetworkInfoWithColor(text, color):
       networkInfo.config(state=tkinter.NORMAL)
-      networkInfo.tag_config("colored", foreground=color)
-      networkInfo.insert(tkinter.END, text, "colored")
+      networkInfo.tag_config("colored" + networkInfo.index('end'), foreground=color)
+      networkInfo.insert(tkinter.END, text, "colored" + networkInfo.index('end'))
       networkInfo.config(state=tkinter.DISABLED)
       window.update_idletasks()
 
@@ -80,7 +80,7 @@ def joinServer():
       SERVERADDR = (SERVERIP, SERVERPORT)
       server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
       server.connect(SERVERADDR)
-   except ValueError as ve:
+   except ValueError:
 
       addToNetworkInfo("Inputs Invalid \n")
 
@@ -95,6 +95,7 @@ def joinServer():
       listenToServerThread = threading.Thread(target=listenToServer, daemon=True, args=())
       listenToServerThread.start()
       EnterInformationButton.config(state = tkinter.DISABLED)
+      SendPublicMessageButton.config(state = tkinter.NORMAL)
 
 def sendMessageToServer(msg):
    if(connected):
@@ -137,6 +138,7 @@ def listenToServer():
                connected = False
                addToNetworkInfo("Disconnected From Server \n")
                EnterInformationButton.config(state = tkinter.NORMAL)
+               SendPublicMessageButton.config(state = tkinter.DISABLED)
                changeQuestionTextBox("")
                ans1button.config(text="", state="disabled")
                ans2button.config(text="", state="disabled")
@@ -150,6 +152,7 @@ def listenToServer():
                connected = False
                addToNetworkInfo("Disconnected From Server \n")
                EnterInformationButton.config(state = tkinter.NORMAL)
+               SendPublicMessageButton.config(state = tkinter.DISABLED)
                changeQuestionTextBox("")
                ans1button.config(text="", state="disabled")
                ans2button.config(text="", state="disabled")
@@ -162,6 +165,7 @@ def listenToServer():
                connected = False
                addToNetworkInfo("Game Already Started \n")
                EnterInformationButton.config(state = tkinter.NORMAL)
+               SendPublicMessageButton.config(state = tkinter.DISABLED)
                break
 
             if receivedMessage.startswith(QUESTION_MESSAGE):
@@ -216,9 +220,10 @@ def listenToServer():
                continue
 
             if receivedMessage.startswith(GAMESTATS_MESSAGE):
-               gameStatsStr = receivedMessage[len(GAMESTATS_MESSAGE):]
-               gameStats = gameStatsStr.split(DIVIDER_MESSAGE)
-               changeQuestionTextBox(f"You came in {gameStats[0]}. place with {gameStats[1]} correct answers")
+               gameStats = receivedMessage[len(GAMESTATS_MESSAGE):].split(DIVIDER_MESSAGE)
+
+               changeQuestionTextBox(f"You came in {gameStats[0]}. out of {gameStats[1]} place with {gameStats[2]} correct answers")
+
                continue
                #ADD SOME FLAIR
       except Exception as e:
@@ -227,6 +232,7 @@ def listenToServer():
          connected = False
          addToNetworkInfo("Disconnected From Server \n")
          EnterInformationButton.config(state = tkinter.NORMAL)
+         SendPublicMessageButton.config(state = tkinter.DISABLED)
          changeQuestionTextBox("")
          ans1button.config(text="", state="disabled")
          ans2button.config(text="", state="disabled")
@@ -249,7 +255,7 @@ window.configure(bg="#141414")
 window.resizable(False, False)
 window.attributes('-topmost', 1)
 window.attributes('-topmost', 0)
-window.title("Kahoot Client")
+window.title("TriviaGame Client")
 
 iconphotoimage = ImageTk.PhotoImage(Image.open(ICONPATH))
 checkmarkimage = ImageTk.PhotoImage(Image.open(CHECKMARKPATH))
@@ -319,7 +325,7 @@ EnterPublicMessage = tkinter.Entry(informationFrame, width=42)
 PublicMessageLabel.place(x=10, y=2)
 EnterPublicMessage.place(x=10, y=25)
 
-SendPublicMessageButton = tkinter.Button(informationFrame, text="send", command=sendPublicMessage, width=8, height=0)
+SendPublicMessageButton = tkinter.Button(informationFrame, text="send", command=sendPublicMessage, state="disabled",width=8, height=0)
 SendPublicMessageButton.place(x=270, y=22)
 
 NameLabel = tkinter.Label(informationFrame, text="Name:", width=5, height=1, bg="purple" ,anchor=tkinter.W)

@@ -120,7 +120,7 @@ class PlayerList:
         i = 1
         #DO SOMETHING ABOUT TIES!!!
         for player in self.PList:
-            player.sendMessage(GAMESTATS_MESSAGE + str(i) + DIVIDER_MESSAGE + str(player.score))
+            player.sendMessage(GAMESTATS_MESSAGE + str(i) + DIVIDER_MESSAGE +  str(len(self.PList)) + DIVIDER_MESSAGE + str(player.score))
             i = i + 1
 
 class Player:

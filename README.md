@@ -1,7 +1,6 @@
 # TriviaGame
 CMP2004 Project
 To Do:
-fix colored messages
 fix/improve score placement
 create new window to announce placement on client
 add basic gui for server
