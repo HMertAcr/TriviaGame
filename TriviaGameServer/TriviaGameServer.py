@@ -18,6 +18,7 @@ QUESTIONHASIMAGE_MESSAGE = "!IMAGE "
 ANSWERTOQUESTION_MESSAGE = "!ANSWER: "
 ISANSWERCORRECT_MESSAGE = "!ISCORRECT: "
 GAMESTATS_MESSAGE = "!STATS: "
+PUBLIC_MESSAGE = "!PUBLICMESSAGE: "
 SERVERADDR = (SERVERIP, SERVERPORT)
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 questionPath = r"dist\questions.txt"
@@ -129,7 +130,7 @@ class Player:
         self.playerAddress = Address
         self.playerName = Name
         self.playerID = f"{self.playerName}[{self.playerAddress[0]}{self.playerAddress[1]}]"
-        self.playerColor = "%06x" % random.randint(0, 0xFFFFFF)
+        self.playerColor = "#%06x" % random.randint(0, 0xFFFFFF)
         self.currentQuestion = ""
         self.score = 0
         self.listeningThread = threading.Thread(target=self.Listen, daemon=True, args=())
@@ -165,6 +166,12 @@ class Player:
                             self.sendMessage(ISANSWERCORRECT_MESSAGE+"YES")
                         else:
                             self.sendMessage(ISANSWERCORRECT_MESSAGE+"NO")
+                    continue
+
+                if receivedMessage.startswith(PUBLIC_MESSAGE):
+                    receivedPublicMessage = receivedMessage[len(PUBLIC_MESSAGE):]
+                    playerList.sendAllPlayers(PUBLIC_MESSAGE+self.playerColor+DIVIDER_MESSAGE+self.playerID+": "+receivedPublicMessage)
+
             
 
     def disconnect(self):
