@@ -252,7 +252,7 @@ ICONPATH = r"dist\TriviaGameIcon.ico"
 CHECKMARKPATH = r"dist\checkMark.png"
 CROSSPATH = r"dist\cross.png"
 clientWindow = tkinter.Tk()
-clientWindow.geometry("{}x{}+50+50".format(windowWIDTH, windowHEIGHT))
+clientWindow.geometry(f"{windowWIDTH}x{windowHEIGHT}+50+50")
 clientWindow.configure(bg="#141414")
 clientWindow.resizable(False, False)
 clientWindow.attributes('-topmost', 1)
@@ -274,14 +274,10 @@ def on_closing():
          except:
             pass
       clientWindow.destroy()
-      exit
+      quit()
 
 clientWindow.protocol("WM_DELETE_WINDOW", on_closing)
 
-
-leftFrame = tkinter.Frame(clientWindow, bg="#141414", width=5*(windowWIDTH)/7, height=windowHEIGHT)
-
-rightFrame = tkinter.Frame(clientWindow, bg="#141414", width=2*(windowWIDTH)/7, height=windowHEIGHT)
 
 questionFrame = tkinter.Frame(clientWindow, bg="#404040", width=5*(windowWIDTH)/7, height=4*(windowHEIGHT)/7)
 answerFrame =tkinter.Frame(clientWindow, bg="#171717", width=5*(windowWIDTH)/7, height=3*(windowHEIGHT)/7)
@@ -295,8 +291,7 @@ networkFrame.place(x=5*(windowWIDTH)/7, y=0)
 informationFrame.place(x=5*(windowWIDTH)/7, y=17*(windowHEIGHT)/20)
 
 
-questionText = tkinter.Text(questionFrame, width=70, height=22,bg="black",fg="white")
-questionText.config(state=tkinter.DISABLED)
+questionText = tkinter.Text(questionFrame, width=70, height=22, state="disabled", bg="black",fg="white")
 
 questionImage=tkinter.Label(questionFrame, image=pixelVirtual, width=280, height= 352,bg="black",fg="white")
 
@@ -317,8 +312,7 @@ ans4button.place(x=450, y=150)
 
 
 
-networkInfo = tkinter.Text(networkFrame, width=40, height=35, fg="white", bg="black" )
-networkInfo.config(state=tkinter.DISABLED)
+networkInfo = tkinter.Text(networkFrame, width=40, height=35, state="disabled", fg="white", bg="black" )
 
 networkInfo.place(x=10,y=15)
 
