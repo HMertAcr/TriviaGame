@@ -252,11 +252,12 @@ def startGame():
     if len(playerList.PList) > 0:
 
         for question in questionList.qList:
-            serverWindow.after(5000, playerList.sendAllPlayersQuestion(question))
+            playerList.sendAllPlayersQuestion(question)
+            time.sleep(5)
 
         playerList.sendPlayerScores()
 
-        serverWindow.after(5000)
+        time.sleep(5)
 
         playerList.disconnectAllPlayers()
         playerList.clear()
@@ -266,6 +267,8 @@ def startGame():
 
     else:
         addToNetworkInfo("No Current Players \n")
+        StartServerButton.config(state=tkinter.NORMAL)
+        StartGameButton.config(state=tkinter.DISABLED)
         server.close()
 
 
@@ -298,7 +301,9 @@ EnterPort.place(x=129, y=603)
 StartServerButton = tkinter.Button(serverWindow, text="start", command=startServer, width=8, height=0)
 StartServerButton.place(x=186, y=600)
 
-StartGameButton = tkinter.Button(serverWindow, text="play", command=startGame, state="disabled" ,width=8, height=0)
+gameThread = threading.Thread(target=startGame, daemon=False, args=())
+
+StartGameButton = tkinter.Button(serverWindow, text="play", command=gameThread.start, state="disabled" ,width=8, height=0)
 StartGameButton.place(x=255, y=600)
 
 def on_closing():
