@@ -5,7 +5,8 @@ import random
 import tkinter
 
 HEADER = 64
-
+SERVERIP = socket.gethostbyname(socket.gethostname())
+SERVERPORT =  6666
 FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "Disconnect"
 GAMESTARTED_MESSAGE = "Game Already Started"
@@ -19,13 +20,12 @@ ANSWERTOQUESTION_MESSAGE = "!ANSWER: "
 ISANSWERCORRECT_MESSAGE = "!ISCORRECT: "
 GAMESTATS_MESSAGE = "!STATS: "
 PUBLIC_MESSAGE = "!PUBLICMESSAGE: "
+SERVERADDR = (SERVERIP, SERVERPORT)
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 questionPath = r"dist\questions.txt"
-gameStarted = False
+server.bind(SERVERADDR)
 
-def addToNetworkInfo(text):
-      networkInfo.config(state=tkinter.NORMAL)
-      networkInfo.insert(tkinter.END, text)
-      networkInfo.config(state=tkinter.DISABLED)
+start = False
 
 def sendConnectionMessage(msg, connection):
     encodedMsg = msg.encode(FORMAT)
@@ -121,9 +121,6 @@ class PlayerList:
         for player in self.PList:
             player.sendMessage(GAMESTATS_MESSAGE + str(i) + DIVIDER_MESSAGE +  str(len(self.PList)) + DIVIDER_MESSAGE + str(player.score))
             i = i + 1
-    
-    def clear(self):
-        self.PList = []
 
 class Player:
 
@@ -155,14 +152,14 @@ class Player:
                 if receivedMessage == DISCONNECT_MESSAGE:
                     self.playerConnection.close()
                     self.connected = False
-                    addToNetworkInfo(f"{self.playerID} Disconnected From Server \n")
+                    print(f"{self.playerID} Disconnected From Server")
                     time.sleep(2)
                     break
 
                 if receivedMessage.startswith(ANSWERTOQUESTION_MESSAGE):
                     if isinstance(self.currentQuestion, Question):
                         Answer = receivedMessage[len(ANSWERTOQUESTION_MESSAGE):]
-                        addToNetworkInfo(f"{self.playerID} answered {Answer} \n")
+                        print(f"{self.playerID} answered {Answer}")
                         if Answer == self.currentQuestion.Answers[0]:
                             self.score = self.score + 1
                             self.sendMessage(ISANSWERCORRECT_MESSAGE+"YES")
@@ -174,13 +171,14 @@ class Player:
                     receivedPublicMessage = receivedMessage[len(PUBLIC_MESSAGE):]
                     playerList.sendAllPlayers(PUBLIC_MESSAGE+self.playerColor+DIVIDER_MESSAGE+self.playerID+": "+receivedPublicMessage)
 
+            
 
     def disconnect(self):
         self.sendMessage(ASKFORDISCONNECT_MESSAGE)
 
     def sendMessage(self, msg):
         if self.connected:
-            addToNetworkInfo(f"Sent {msg} to {self.playerID} \n")
+            print(f"Sent {msg} to {self.playerID}")
             sendConnectionMessage(msg, self.playerConnection)
 
     def sendImage(self, image):
@@ -197,115 +195,63 @@ class Player:
             self.sendMessage(QUESTION_MESSAGE + QUESTIONHASIMAGE_MESSAGE + question.Question + DIVIDER_MESSAGE + shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
         else:
             self.sendMessage(QUESTION_MESSAGE + question.Question + DIVIDER_MESSAGE + shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
+        
+
+
+
+
 
 def listenForNewPlayers():
-    try:
-        server.listen()
-        while True:
+    server.listen()
+    while True:
+        try:
             (newPlayerConnection, PlayerAddress) = server.accept()
-            if not gameStarted:
+            if not start:
                 newPlayerName = recieveMessageFromConnection(newPlayerConnection)
                 playerList.add(Player(newPlayerConnection, PlayerAddress, newPlayerName))
-                addToNetworkInfo(f"{playerList.PList[-1].playerID} Joined \n")
+                print(f"{playerList.PList[-1].playerID} Joined")
             else:
                 rejectedPlayerName = recieveMessageFromConnection(newPlayerConnection)
                 sendConnectionMessage(GAMESTARTED_MESSAGE, newPlayerConnection)
                 newPlayerConnection.close()
-    except:
-        pass
+        except:
+            pass
+
 
 questionList = QuestionList(questionPath)
 playerList = PlayerList()
 
-def startServer():
-    global SERVERIP
-    global SERVERPORT
-    global SERVERADDR
-    global server
-    SERVERIP = EnterIP.get()
-    SERVERPORT = EnterPort.get()
+print(f"Server started {socket.gethostbyname(socket.gethostname())}:{SERVERPORT}")
 
-    try:
-        if (SERVERIP == "" or SERVERPORT == "" or (not SERVERPORT.isnumeric)):
-            raise ValueError
-        SERVERPORT = int(SERVERPORT)
-        SERVERADDR = (SERVERIP, SERVERPORT)
-        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server.bind(SERVERADDR)
-    except ValueError:
-        addToNetworkInfo("Inputs Invalid \n")
-    except:
-        addToNetworkInfo("Couldn't start server \n")
+listenForNewPlayersThread = threading.Thread(target=listenForNewPlayers, daemon=True, args=())
+listenForNewPlayersThread.start()
+
+while not start:
+    startInput = input("---Start Game? Y/N--- \n")
+    if startInput == "Y":
+        start = True
     else:
-        addToNetworkInfo(f"Server started {SERVERIP}:{SERVERPORT} \n")
-        StartServerButton.config(state=tkinter.DISABLED)
-        StartGameButton.config(state=tkinter.NORMAL)
-        listenForNewPlayersThread = threading.Thread(target=listenForNewPlayers, daemon=True, args=())
-        listenForNewPlayersThread.start()
+        if startInput == "N":
+            start = False
+        else:
+            print("Enter only Y/N")
 
+if len(playerList.PList) > 0:
 
-def startGame():
+    for question in questionList.qList:
+        playerList.sendAllPlayersQuestion(question)
+        time.sleep(5)
 
-    global gameStarted
-    gameStarted = True
+    playerList.sendPlayerScores()
 
-    if len(playerList.PList) > 0:
+    time.sleep(5)
 
-        for question in questionList.qList:
-            serverWindow.after(5000, playerList.sendAllPlayersQuestion(question))
-
-        playerList.sendPlayerScores()
-
-        serverWindow.after(5000)
-
-        playerList.disconnectAllPlayers()
-        playerList.clear()
-
-        StartServerButton.config(state=tkinter.NORMAL)
-        StartGameButton.config(state=tkinter.DISABLED)
-
-    else:
-        addToNetworkInfo("No Current Players \n")
-        server.close()
-
-
-windowWidth=345
-windowHeight=640
-
-serverWindow = tkinter.Tk()
-serverWindow.geometry(f"{windowWidth}x{windowHeight}+40+40")
-serverWindow.configure(bg="#404040")
-serverWindow.attributes('-topmost', 1)
-serverWindow.attributes('-topmost', 0)
-serverWindow.title("TriviaGame Server")
-
-
-networkInfo = tkinter.Text(serverWindow, width=40, height=35, bg = "black", fg = "white")
-networkInfo.config(state=tkinter.DISABLED)
-networkInfo.place(x=10,y=10)
-
-IPLabel = tkinter.Label(serverWindow, text= "Ip Adress:", width=8, height=1, bg="#404040", fg="white", anchor=tkinter.W)
-EnterIP = tkinter.Entry(serverWindow, width=16)
-IPLabel.place(x=24, y=580)
-EnterIP.place(x=24, y=603)
-EnterIP.insert(tkinter.END, socket.gethostbyname(socket.gethostname()))
-
-PortLabel = tkinter.Label(serverWindow, text="Port:", width=5, height=1, bg="#404040", fg="white", anchor=tkinter.W)
-EnterPort = tkinter.Entry(serverWindow, width=8)
-PortLabel.place(x=129, y=580)
-EnterPort.place(x=129, y=603)
-
-StartServerButton = tkinter.Button(serverWindow, text="start", command=startServer, width=8, height=0)
-StartServerButton.place(x=186, y=600)
-
-StartGameButton = tkinter.Button(serverWindow, text="play", command=startGame, state="disabled" ,width=8, height=0)
-StartGameButton.place(x=255, y=600)
-
-def on_closing():
     playerList.disconnectAllPlayers()
-    serverWindow.destroy()
-    quit()
 
-serverWindow.protocol("WM_DELETE_WINDOW", on_closing)
+    time.sleep(1)
 
-serverWindow.mainloop() 
+else:
+    
+    print("No Current Players")
+
+print("exited w no error")
