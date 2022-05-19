@@ -227,10 +227,10 @@ def listenToServer():
             if receivedMessage.startswith(GAMESTATS_MESSAGE):
                gameStats = receivedMessage[len(GAMESTATS_MESSAGE):].split(DIVIDER_MESSAGE)
 
-               changeQuestionTextBox(f"You came in {gameStats[0]}. out of {gameStats[1]} place with {gameStats[2]} correct answers")
+               changeQuestionTextBox(f"You came in {gameStats[0]}. place out of {gameStats[1]} players with {gameStats[2]} correct answers")
 
                continue
-               #ADD SOME FLAIR
+
       except Exception:
          server.close()
          connected = False

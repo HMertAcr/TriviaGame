@@ -113,6 +113,12 @@ class PlayerList:
     def add(self, player):
         self.PList.append(player)
 
+    def removeDisconnected(self):
+        for i in range(len(self.PList)):
+            if not self.PList[i].connected:
+                del self.PList[i]
+                i = i-1
+
     def sortByScores(self):
         for i in range(len(self.PList)):
             for j in range(len(self.PList)-i-1):
@@ -121,12 +127,19 @@ class PlayerList:
     
     def sendPlayerScores(self):
         self.sortByScores()
-        i = 1
-        #DO SOMETHING ABOUT TIES!!!
-        for player in self.PList:
-            player.sendMessage(GAMESTATS_MESSAGE + str(i) + DIVIDER_MESSAGE +  str(len(self.PList)) + DIVIDER_MESSAGE + str(player.score))
-            i = i + 1
-    
+
+        self.PList[0].sendMessage(GAMESTATS_MESSAGE + "1" + DIVIDER_MESSAGE +  str(len(self.PList)) + DIVIDER_MESSAGE + str(self.PList[0].score))
+
+        placement = 1
+
+        for i in range(1, len(self.PList)):
+            if self.PList[i].score == self.PList[i-1].score:
+                self.PList[i].sendMessage(GAMESTATS_MESSAGE + str(placement) + DIVIDER_MESSAGE +  str(len(self.PList)) + DIVIDER_MESSAGE + str(self.PList[i].score))
+            else:
+                placement = i+1
+                self.PList[i].sendMessage(GAMESTATS_MESSAGE + str(placement) + DIVIDER_MESSAGE +  str(len(self.PList)) + DIVIDER_MESSAGE + str(self.PList[i].score))
+
+
     def clear(self):
         self.PList = []
 
@@ -171,9 +184,9 @@ class Player:
                         addToNetworkInfo(f"{self.playerID} answered {Answer} \n")
                         if Answer == self.currentQuestion.Answers[0]:
                             self.score = self.score + 1
-                            isAnswerCorrect = True
+                            self.isAnswerCorrect = True
                         else:
-                            isAnswerCorrect = False
+                            self.isAnswerCorrect = False
                     continue
 
                 if receivedMessage.startswith(PUBLIC_MESSAGE):
@@ -262,13 +275,18 @@ def startGame():
     global gameStarted
     gameStarted = True
 
+    timeForQuestions = 5
+    timeBetweenQuestions = 5
+
+    playerList.removeDisconnected()
+
     if len(playerList.PList) > 0:
 
         for question in questionList.qList:
             playerList.sendAllPlayersQuestion(question)
-            time.sleep(10)
+            time.sleep(timeForQuestions)
             playerList.sendAllPlayersIfCorrect()
-            time.sleep(5)
+            time.sleep(timeBetweenQuestions)
 
         playerList.sendPlayerScores()
 
@@ -276,17 +294,17 @@ def startGame():
 
         playerList.disconnectAllPlayers()
         playerList.clear()
-        
+        server.close()
+        gameStarted = False
+
         gameStarted = False
         StartServerButton.config(state=tkinter.NORMAL)
         StartGameButton.config(state=tkinter.DISABLED)
 
     else:
         addToNetworkInfo("No Current Players \n")
-        StartServerButton.config(state=tkinter.NORMAL)
-        StartGameButton.config(state=tkinter.DISABLED)
-        server.close()
         gameStarted = False
+        
 
 
 windowWidth=345
@@ -322,9 +340,7 @@ EnterPort.place(x=129, y=603)
 StartServerButton = tkinter.Button(serverWindow, text="start", command=startServer, width=8, height=0)
 StartServerButton.place(x=186, y=600)
 
-gameThread = threading.Thread(target=startGame, daemon=False, args=())
-
-StartGameButton = tkinter.Button(serverWindow, text="play", command=gameThread.start, state="disabled" ,width=8, height=0)
+StartGameButton = tkinter.Button(serverWindow, text="play", command= lambda: threading.Thread(target=startGame, daemon=False, args=()).start(), state="disabled" ,width=8, height=0)
 StartGameButton.place(x=255, y=600)
 
 def on_closing():
