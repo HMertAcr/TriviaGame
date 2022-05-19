@@ -275,8 +275,8 @@ def startGame():
     global gameStarted
     gameStarted = True
 
-    timeForQuestions = 5
-    timeBetweenQuestions = 5
+    timeForQuestions = 10
+    timeBetweenQuestions = 3
 
     playerList.removeDisconnected()
 
