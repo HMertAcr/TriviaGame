@@ -309,12 +309,10 @@ ans2button = tkinter.Button(answerFrame, command=lambda: answerChoosen(2), bg="#
 ans3button = tkinter.Button(answerFrame, command=lambda: answerChoosen(3), bg="#d99f00", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
 ans4button = tkinter.Button(answerFrame, command=lambda: answerChoosen(4), bg="#229000", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
 
-ans1button.place(x=50, y=25)
-ans2button.place(x=450, y=25)
-ans3button.place(x=50, y=150)
-ans4button.place(x=450, y=150)
-
-
+ans1button.place(x=50, y=35)
+ans2button.place(x=465, y=35)
+ans3button.place(x=50, y=160)
+ans4button.place(x=465, y=160)
 
 networkInfo = tkinter.Text(networkFrame, width=40, height=35, state="disabled", fg="white", bg="black" )
 
