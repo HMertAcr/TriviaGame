@@ -6,4 +6,4 @@ fix/improve score placement
 create new window to announce placement on client
 images // teacher said give up //
 countdown
-timeout message and breather after every question
+instead of plist lenght check active players in the list 

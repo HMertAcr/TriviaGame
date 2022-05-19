@@ -3,6 +3,7 @@ import time
 import threading
 import random
 import tkinter
+from PIL import Image,ImageTk
 
 HEADER = 64
 
@@ -101,6 +102,10 @@ class PlayerList:
         for player in self.PList:
             player.sendQuestion(question)
 
+    def sendAllPlayersIfCorrect(self):
+        for player in self.PList:
+            player.sendIfCorrect()
+
     def disconnectAllPlayers(self):
         for player in self.PList:
             player.disconnect()
@@ -134,6 +139,7 @@ class Player:
         self.playerID = f"{self.playerName}[{self.playerAddress[0]}{self.playerAddress[1]}]"
         self.playerColor = "#%06x" % random.randint(0, 0xFFFFFF)
         self.currentQuestion = ""
+        self.isAnswerCorrect = False
         self.score = 0
         self.listeningThread = threading.Thread(target=self.Listen, daemon=True, args=())
         self.connected = True
@@ -165,9 +171,9 @@ class Player:
                         addToNetworkInfo(f"{self.playerID} answered {Answer} \n")
                         if Answer == self.currentQuestion.Answers[0]:
                             self.score = self.score + 1
-                            self.sendMessage(ISANSWERCORRECT_MESSAGE+"YES")
+                            isAnswerCorrect = True
                         else:
-                            self.sendMessage(ISANSWERCORRECT_MESSAGE+"NO")
+                            isAnswerCorrect = False
                     continue
 
                 if receivedMessage.startswith(PUBLIC_MESSAGE):
@@ -177,6 +183,12 @@ class Player:
 
     def disconnect(self):
         self.sendMessage(ASKFORDISCONNECT_MESSAGE)
+
+    def sendIfCorrect(self):
+        if self.isAnswerCorrect:
+            self.sendMessage(ISANSWERCORRECT_MESSAGE + "YES")
+        else: 
+            self.sendMessage(ISANSWERCORRECT_MESSAGE + "NO")
 
     def sendMessage(self, msg):
         if self.connected:
@@ -192,6 +204,7 @@ class Player:
         shuffledAnswers = question.getAnswersInRandom()
 
         self.currentQuestion = question
+        self.isAnswerCorrect = False
 
         if question.hasImage:
             self.sendMessage(QUESTION_MESSAGE + QUESTIONHASIMAGE_MESSAGE + question.Question + DIVIDER_MESSAGE + shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
@@ -253,6 +266,8 @@ def startGame():
 
         for question in questionList.qList:
             playerList.sendAllPlayersQuestion(question)
+            time.sleep(10)
+            playerList.sendAllPlayersIfCorrect()
             time.sleep(5)
 
         playerList.sendPlayerScores()
@@ -261,7 +276,8 @@ def startGame():
 
         playerList.disconnectAllPlayers()
         playerList.clear()
-
+        
+        gameStarted = False
         StartServerButton.config(state=tkinter.NORMAL)
         StartGameButton.config(state=tkinter.DISABLED)
 
@@ -270,10 +286,12 @@ def startGame():
         StartServerButton.config(state=tkinter.NORMAL)
         StartGameButton.config(state=tkinter.DISABLED)
         server.close()
+        gameStarted = False
 
 
 windowWidth=345
 windowHeight=640
+ICONPATH = r"dist\TriviaGameIcon.ico"
 
 serverWindow = tkinter.Tk()
 serverWindow.geometry(f"{windowWidth}x{windowHeight}+40+40")
@@ -282,6 +300,9 @@ serverWindow.attributes('-topmost', 1)
 serverWindow.attributes('-topmost', 0)
 serverWindow.title("TriviaGame Server")
 
+iconphotoimage = ImageTk.PhotoImage(Image.open(ICONPATH))
+serverWindow.iconphoto(False, iconphotoimage)
+serverWindow.iconbitmap(default=ICONPATH)
 
 networkInfo = tkinter.Text(serverWindow, width=40, height=35, bg = "black", fg = "white")
 networkInfo.config(state=tkinter.DISABLED)

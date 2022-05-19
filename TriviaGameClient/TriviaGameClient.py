@@ -54,6 +54,9 @@ def answerChoosen(answer):
       choosenAnswer = ans4button["text"]
 
    sendMessageToServer(ANSWERTOQUESTION_MESSAGE+choosenAnswer)
+
+   changeQuestionTextBox("Answer Sent")
+
    ans1button.config(text="", state="disabled")
    ans2button.config(text="", state="disabled")
    ans3button.config(text="", state="disabled")
@@ -195,7 +198,7 @@ def listenToServer():
                isAnswerCorrect = receivedMessage[len(ISANSWERCORRECT_MESSAGE):]
                if isAnswerCorrect == "YES":
 
-                  changeQuestionTextBox("")
+                  changeQuestionTextBox("Good Job!")
 
                   ans1button.config(text="", state="disabled")
                   ans2button.config(text="", state="disabled")
@@ -206,7 +209,7 @@ def listenToServer():
 
                if isAnswerCorrect == "NO":
                   
-                  changeQuestionTextBox("")
+                  changeQuestionTextBox("Better Luck Next Time")
 
                   ans1button.config(text="", state="disabled")
                   ans2button.config(text="", state="disabled")
@@ -260,8 +263,9 @@ clientWindow.attributes('-topmost', 0)
 clientWindow.title("TriviaGame Client")
 
 iconphotoimage = ImageTk.PhotoImage(Image.open(ICONPATH))
-checkmarkimage = ImageTk.PhotoImage(Image.open(CHECKMARKPATH))
-crossimage = ImageTk.PhotoImage(Image.open(CROSSPATH))
+checkmarkimage = ImageTk.PhotoImage(Image.open(CHECKMARKPATH).resize((200, 200), Image.Resampling.LANCZOS))
+crossimage = ImageTk.PhotoImage(Image.open(CROSSPATH).resize((200, 200), Image.Resampling.LANCZOS))
+
 pixelVirtual = tkinter.PhotoImage(width=1, height=1)
 clientWindow.iconphoto(False, iconphotoimage)
 clientWindow.iconbitmap(default=ICONPATH)
