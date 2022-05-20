@@ -42,6 +42,29 @@ def changeQuestionTextBox(text):
       questionText.config(state=tkinter.DISABLED)
       clientWindow.update_idletasks()
 
+def setCountDown(num):
+   countdownLabel["text"]=f"{num}.0/{num}.0"
+   countDown(int(num)-1, 9)
+
+
+def setCountDownString(str):
+   countdownLabel["text"] = str
+
+def countDown(num, decimal):
+   try:
+      temp, start = countdownLabel["text"].split("/")
+      cnum, cdecimal = temp.split(".")
+   except:
+      pass
+   else:
+      if cnum.isnumeric() and cdecimal.isnumeric():
+         countdownLabel["text"]=f"{num}.{decimal}/{start}"
+         if decimal != 0:
+            countdownLabel.after(100, countDown, num, decimal-1,)
+         else:
+            if num != 0:
+               countdownLabel.after(100, countDown, num-1, 9)
+
 def answerChoosen(answer):
 
    if answer == 1:
@@ -95,6 +118,7 @@ def joinServer():
       connected = True
       sendMessageToServer(PlayerName)
       addToNetworkInfo(f"Connected to {SERVERIP}:{SERVERPORT} \n")
+      setCountDownString("online")
       listenToServerThread = threading.Thread(target=listenToServer, daemon=True, args=())
       listenToServerThread.start()
       EnterInformationButton.config(state = tkinter.DISABLED)
@@ -143,6 +167,7 @@ def listenToServer():
                EnterInformationButton.config(state = tkinter.NORMAL)
                SendPublicMessageButton.config(state = tkinter.DISABLED)
                changeQuestionTextBox("")
+               setCountDownString("offline")
                ans1button.config(text="", state="disabled")
                ans2button.config(text="", state="disabled")
                ans3button.config(text="", state="disabled")
@@ -158,6 +183,7 @@ def listenToServer():
                EnterInformationButton.config(state = tkinter.NORMAL)
                SendPublicMessageButton.config(state = tkinter.DISABLED)
                changeQuestionTextBox("")
+               setCountDownString("offline")
                ans1button.config(text="", state="disabled")
                ans2button.config(text="", state="disabled")
                ans3button.config(text="", state="disabled")
@@ -168,6 +194,7 @@ def listenToServer():
             if receivedMessage == GAMESTARTED_MESSAGE:
                server.close()
                connected = False
+               setCountDownString("offline")
                addToNetworkInfo("Game Already Started \n")
                EnterInformationButton.config(state = tkinter.NORMAL)
                SendPublicMessageButton.config(state = tkinter.DISABLED)
@@ -186,16 +213,19 @@ def listenToServer():
 
                qnaList = qnaString.split(DIVIDER_MESSAGE)
 
-               changeQuestionTextBox(qnaList[0])
+               setCountDown(qnaList[0])
 
-               ans1button.config(text=qnaList[1], state="normal")
-               ans2button.config(text=qnaList[2], state="normal")
-               ans3button.config(text=qnaList[3], state="normal")
-               ans4button.config(text=qnaList[4], state="normal")
+               changeQuestionTextBox(qnaList[1])
+
+               ans1button.config(text=qnaList[2], state="normal")
+               ans2button.config(text=qnaList[3], state="normal")
+               ans3button.config(text=qnaList[4], state="normal")
+               ans4button.config(text=qnaList[5], state="normal")
                continue
 
             if receivedMessage.startswith(ISANSWERCORRECT_MESSAGE):
                isAnswerCorrect = receivedMessage[len(ISANSWERCORRECT_MESSAGE):]
+               setCountDownString("times up")
                if isAnswerCorrect == "YES":
 
                   changeQuestionTextBox("Good Job!")
@@ -226,7 +256,7 @@ def listenToServer():
 
             if receivedMessage.startswith(GAMESTATS_MESSAGE):
                gameStats = receivedMessage[len(GAMESTATS_MESSAGE):].split(DIVIDER_MESSAGE)
-
+               setCountDownString("game over")
                changeQuestionTextBox(f"You came in {gameStats[0]}. place out of {gameStats[1]} players with {gameStats[2]} correct answers")
 
                continue
@@ -309,16 +339,20 @@ ans2button = tkinter.Button(answerFrame, command=lambda: answerChoosen(2), bg="#
 ans3button = tkinter.Button(answerFrame, command=lambda: answerChoosen(3), bg="#d99f00", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
 ans4button = tkinter.Button(answerFrame, command=lambda: answerChoosen(4), bg="#229000", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
 
-ans1button.place(x=50, y=35)
-ans2button.place(x=465, y=35)
-ans3button.place(x=50, y=160)
-ans4button.place(x=465, y=160)
+countdownLabel = tkinter.Label(answerFrame, text="offline", width=25, height=1, bg="#171717", fg="white")
+
+ans1button.place(x=50, y=45)
+ans2button.place(x=465, y=45)
+ans3button.place(x=50, y=170)
+ans4button.place(x=465, y=170)
+
+countdownLabel.place(x=350, y=10)
 
 networkInfo = tkinter.Text(networkFrame, width=40, height=35, state="disabled", fg="white", bg="black" )
 
 networkInfo.place(x=10,y=15)
 
-PublicMessageLabel = tkinter.Label(informationFrame, text="Public Message:", width=20, height=1, bg="#404040", anchor=tkinter.W, fg="white")
+PublicMessageLabel = tkinter.Label(informationFrame, text="Public Message:", width=20, height=1, bg="#404040", fg="white", anchor=tkinter.W)
 EnterPublicMessage = tkinter.Entry(informationFrame, width=42)
 PublicMessageLabel.place(x=10, y=2)
 EnterPublicMessage.place(x=10, y=25)
@@ -326,17 +360,17 @@ EnterPublicMessage.place(x=10, y=25)
 SendPublicMessageButton = tkinter.Button(informationFrame, text="send", command=sendPublicMessage, state="disabled", width=8, height=0)
 SendPublicMessageButton.place(x=270, y=22)
 
-NameLabel = tkinter.Label(informationFrame, text="Name:", width=5, height=1, bg="#404040",anchor=tkinter.W, fg="white")
+NameLabel = tkinter.Label(informationFrame, text="Name:", width=5, height=1, bg="#404040", fg="white", anchor=tkinter.W)
 EnterName = tkinter.Entry(informationFrame, width=16)
 NameLabel.place(x=10, y=47)
 EnterName.place(x=10, y=70)
 
-IPLabel = tkinter.Label(informationFrame, text= "Ip Adress:", width=8, height=1, bg="#404040",anchor=tkinter.W, fg="white")
+IPLabel = tkinter.Label(informationFrame, text= "Ip Adress:", width=8, height=1, bg="#404040", fg="white", anchor=tkinter.W)
 EnterIP = tkinter.Entry(informationFrame, width=16)
 IPLabel.place(x=112, y=47)
 EnterIP.place(x=112, y=70)
 
-PortLabel = tkinter.Label(informationFrame, text="Port:", width=5, height=1, bg="#404040",anchor=tkinter.W, fg="white")
+PortLabel = tkinter.Label(informationFrame, text="Port:", width=5, height=1, bg="#404040", fg="white", anchor=tkinter.W)
 EnterPort = tkinter.Entry(informationFrame, width=8)
 PortLabel.place(x=214, y=47)
 EnterPort.place(x=214, y=70)

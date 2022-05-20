@@ -272,9 +272,9 @@ class Player:
         self.isAnswerCorrect = False
 
         if question.hasImage:
-            self.sendMessage(QUESTION_MESSAGE + QUESTIONHASIMAGE_MESSAGE + question.Question + DIVIDER_MESSAGE + shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
+            self.sendMessage(QUESTION_MESSAGE + QUESTIONHASIMAGE_MESSAGE + str(timeForQuestions) + DIVIDER_MESSAGE + question.Question + DIVIDER_MESSAGE + shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
         else:
-            self.sendMessage(QUESTION_MESSAGE + question.Question + DIVIDER_MESSAGE + shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
+            self.sendMessage(QUESTION_MESSAGE + str(timeForQuestions) + DIVIDER_MESSAGE + question.Question + DIVIDER_MESSAGE + shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
 
 def listenForNewPlayers():
     try:
@@ -295,6 +295,7 @@ def listenForNewPlayers():
 FileData = readFile(configPath)
 questionList = QuestionList(FileData[1])
 playerList = PlayerList()
+timeForQuestions, timeBetweenQuestions = getConfig(FileData[0])
 
 def startServer():
     global SERVERIP
@@ -327,7 +328,6 @@ def startGame():
 
     global gameStarted
     gameStarted = True
-    timeForQuestions, timeBetweenQuestions = getConfig(FileData[0])
 
     playerList.removeDisconnected()
 
@@ -335,7 +335,7 @@ def startGame():
 
         for question in questionList.qList:
             playerList.sendAllPlayersQuestion(question)
-            time.sleep(timeForQuestions)
+            time.sleep(timeForQuestions+1)
             playerList.sendAllPlayersIfCorrect()
             time.sleep(timeBetweenQuestions)
 
@@ -397,7 +397,10 @@ StartGameButton = tkinter.Button(serverWindow, text="play", command= lambda: thr
 StartGameButton.place(x=255, y=600)
 
 def on_closing():
-    playerList.disconnectAllPlayers()
+    try:
+        playerList.disconnectAllPlayers()
+    except:
+        pass
     serverWindow.destroy()
     quit()
 
