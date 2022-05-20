@@ -2,10 +2,8 @@
 
 CMP2204 Project
 
-To Do:
+Could be better if:
 
-images // teacher said give up //
+images
 
-use udp for server to all players messages // too boring //
-
-countdown
+use udp for server to all players messages
