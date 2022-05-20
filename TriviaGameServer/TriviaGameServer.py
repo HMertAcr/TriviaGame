@@ -20,7 +20,7 @@ ANSWERTOQUESTION_MESSAGE = "!ANSWER: "
 ISANSWERCORRECT_MESSAGE = "!ISCORRECT: "
 GAMESTATS_MESSAGE = "!STATS: "
 PUBLIC_MESSAGE = "!PUBLICMESSAGE: "
-questionPath = r"dist\questions.txt"
+configPath = r"dist\config.txt"
 gameStarted = False
 
 def addToNetworkInfo(text):
@@ -49,31 +49,83 @@ def recieveMessageFromConnection(connection):
         receivedMessage = connection.recv(msg_lenght).decode(FORMAT)
         return receivedMessage
 
-class QuestionList:
-    
-    def __init__(self, qpath):
-        self.qList=[]
-        qfile=open(qpath, "r")
-        line = True
-        while line:
+def readFile(path):
+
+    FileData = []
+    ConfigData = []
+    QuestionData = []
+
+    file=open(path, "r")
+
+    line = file.readline()
+    if line == "Config:\n":
+        line = file.readline()
+        line = file.readline()
+        while line != "\n":
+            ConfigData.append(line.strip())
+            line = file.readline()
+
+    FileData.append(ConfigData)
+
+    line = file.readline()
+    if line == "Questions:\n":
+        line = file.readline()
+        while line.strip() != "QuestionsEND":
             newQ=[]
-            line = qfile.readline()
+            newQnAList=[]
+
+            line = file.readline()
+            
             if line.startswith(QUESTIONHASIMAGE_MESSAGE):
-                newQ.append(line[len(QUESTIONHASIMAGE_MESSAGE):].strip())
+                newQnAList.append(line[len(QUESTIONHASIMAGE_MESSAGE):].strip())
                 newQhasImage = True
-                newQImagePath = qfile.readline()
+                newQImagePath = file.readline()
             else:
-                newQ.append(line.strip())
+                newQnAList.append(line.strip())
                 newQhasImage = False
                 newQImagePath = ""
             
             for i in range(4):
-                line = qfile.readline()
-                newQ.append(line.strip())
-            self.qList.append(Question(newQ, newQhasImage, newQImagePath))
-            line = qfile.readline()
-        qfile.close()
+                line = file.readline()
+                newQnAList.append(line.strip())
+            
+            newQ.append(newQnAList)
+            newQ.append(newQhasImage)
+            newQ.append(newQImagePath)
+            QuestionData.append(newQ)
+            
+            line = file.readline()
 
+        FileData.append(QuestionData)
+    return FileData
+
+def getConfig(configList):
+    configurations = []
+
+    defaultQuestionTime = 20
+    defaultTimeBetweenQuestions = 5
+
+    configurations.append(defaultQuestionTime)
+    configurations.append(defaultTimeBetweenQuestions)
+
+    for config in configList:
+        config = config.split("=")
+        config[0] = config[0].strip()
+        config[1] = config[1].strip()
+        if config[0] == "Question time":
+            configurations[0] = int(config[1])
+        if config[0] == "Time between questions":
+            configurations[1] = int(config[1])
+    
+    return configurations
+
+
+class QuestionList:
+    
+    def __init__(self, QuestionDataList):
+        self.qList=[]
+        for QuestionData in QuestionDataList:
+            self.qList.append(Question(QuestionData[0], QuestionData[1], QuestionData[2]))
 
 class Question:
     
@@ -240,7 +292,8 @@ def listenForNewPlayers():
     except:
         pass
 
-questionList = QuestionList(questionPath)
+FileData = readFile(configPath)
+questionList = QuestionList(FileData[1])
 playerList = PlayerList()
 
 def startServer():
@@ -274,9 +327,7 @@ def startGame():
 
     global gameStarted
     gameStarted = True
-
-    timeForQuestions = 10
-    timeBetweenQuestions = 3
+    timeForQuestions, timeBetweenQuestions = getConfig(FileData[0])
 
     playerList.removeDisconnected()
 
@@ -288,10 +339,12 @@ def startGame():
             playerList.sendAllPlayersIfCorrect()
             time.sleep(timeBetweenQuestions)
 
+        playerList.removeDisconnected()
         playerList.sendPlayerScores()
 
         time.sleep(5)
 
+        playerList.removeDisconnected()
         playerList.disconnectAllPlayers()
         playerList.clear()
         server.close()
@@ -340,7 +393,7 @@ EnterPort.place(x=129, y=603)
 StartServerButton = tkinter.Button(serverWindow, text="start", command=startServer, width=8, height=0)
 StartServerButton.place(x=186, y=600)
 
-StartGameButton = tkinter.Button(serverWindow, text="play", command= lambda: threading.Thread(target=startGame, daemon=False, args=()).start(), state="disabled" ,width=8, height=0)
+StartGameButton = tkinter.Button(serverWindow, text="play", command= lambda: threading.Thread(target=startGame, daemon=True, args=()).start(), state="disabled" ,width=8, height=0)
 StartGameButton.place(x=255, y=600)
 
 def on_closing():

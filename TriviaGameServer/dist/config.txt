@@ -1,3 +1,10 @@
+Config:
+
+Question time = 10
+Time between questions = 3
+
+Questions:
+
 !IMAGE How many sides does a Dodecahedron have?:
 imagePath
 12
@@ -16,3 +23,4 @@ Beaufort scale
 Richter scale
 Synoptic scale
 Gusting scale
+QuestionsEND
