@@ -4,6 +4,7 @@ import threading
 import random
 import tkinter
 from PIL import Image, ImageTk
+import timeit
 
 HEADER = 64
 imageBuffer = 2048
@@ -44,7 +45,7 @@ def sendImage(imagepath):
     while (data):
         if(udpServer.sendto(data,SERVERADDR)):
             data = f.read(imageBuffer)
-            time.sleep(0.0005)
+            time.sleep(0.0001)
     f.close()
 
 
@@ -292,8 +293,7 @@ class Player:
             self.sendMessage(QUESTION_MESSAGE + QUESTIONHASIMAGE_MESSAGE + str(timeForQuestions) + DIVIDER_MESSAGE + question.Question + DIVIDER_MESSAGE +
                              shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
 
-            imageThread = threading.Thread(target=sendImage, daemon=True, args=(question.imagepath,))
-            imageThread.start()
+            sendImage(question.imagepath)
 
         else:
             self.sendMessage(QUESTION_MESSAGE + str(timeForQuestions) + DIVIDER_MESSAGE + question.Question + DIVIDER_MESSAGE +

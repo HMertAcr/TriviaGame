@@ -240,8 +240,7 @@ def listenToServer():
 
                         questionImage.config(image=pixelVirtual)
 
-                        imageThread = threading.Thread(target=receiveImage, daemon=True, args=())
-                        imageThread.start()
+                        receiveImage()
 
                     else:
 
