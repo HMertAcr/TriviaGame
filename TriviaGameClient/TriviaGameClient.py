@@ -1,14 +1,15 @@
-import tkinter
-from PIL import Image, ImageTk
 import socket
 import time
 import threading
+import random
+import tkinter
+from PIL import Image, ImageTk
 
 HEADER = 64
+imageBuffer = 2048
 FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "Disconnect"
 GAMESTARTED_MESSAGE = "Game Already Started"
-ImageSend_Message = "Incoming Image"
 ASKFORDISCONNECT_MESSAGE = "Exit Game"
 PLAYERNAME_MESSAGE = "Player Name:"
 QUESTION_MESSAGE = "Question: "
@@ -85,7 +86,9 @@ def answerChoosen(answer):
 
     sendMessageToServer(ANSWERTOQUESTION_MESSAGE+choosenAnswer)
 
-    changeQuestionTextBox("Answer Sent")
+    setCountDownString("Answer Sent")
+
+    changeQuestionTextBox("")
 
     ans1button.config(text="", state="disabled")
     ans2button.config(text="", state="disabled")
@@ -100,6 +103,7 @@ def joinServer():
     global SERVERPORT
     global SERVERADDR
     global server
+    global udpServer
     global listenToServerThread
 
     PlayerName = EnterName.get()
@@ -112,6 +116,8 @@ def joinServer():
         SERVERPORT = int(SERVERPORT)
         SERVERADDR = (SERVERIP, SERVERPORT)
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        udpServer = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        udpServer.bind(SERVERADDR)
         server.connect(SERVERADDR)
     except ValueError:
 
@@ -150,6 +156,27 @@ def sendPublicMessage():
     else:
         addToNetworkInfo("Not connected to server \n")
 
+def receiveImage():
+    try:
+        udpServer.settimeout(0.1)
+        data = udpServer.recvfrom(imageBuffer)[0]
+        receivedImagePath=(f"dist/img/currentQuestion.jpg")
+        f = open(receivedImagePath,'wb')
+        try:
+            while(data):
+                f.write(data)
+                udpServer.settimeout(0.1)
+                data = udpServer.recvfrom(imageBuffer)[0]
+        except socket.timeout:
+
+            f.close()
+            global receivedImage
+            receivedImage = ImageTk.PhotoImage(Image.open(receivedImagePath).resize((250, 250), Image.Resampling.BILINEAR))
+            questionImage.config(image=receivedImage)
+
+    except socket.timeout:
+        pass
+
 
 def listenToServer():
     global connected
@@ -164,10 +191,6 @@ def listenToServer():
                 addToNetworkInfo(f"Message received: {receivedMessage} \n")
 
                 messagesReceived.append(receivedMessage)
-
-                if receivedMessage == ImageSend_Message:
-                    pass
-                    # more magic
 
                 if receivedMessage == DISCONNECT_MESSAGE:
                     server.close()
@@ -211,17 +234,22 @@ def listenToServer():
 
                 if receivedMessage.startswith(QUESTION_MESSAGE):
                     if receivedMessage.startswith(QUESTIONHASIMAGE_MESSAGE, len(QUESTION_MESSAGE)):
-                        qnaString = receivedMessage[len(
-                            QUESTION_MESSAGE) + len(QUESTIONHASIMAGE_MESSAGE):]
-                        hasImage = True
-                        # somehow get image maybe
+                        qnaString = receivedMessage[len(QUESTION_MESSAGE) + len(QUESTIONHASIMAGE_MESSAGE):]
+                        
+                        qnaList = qnaString.split(DIVIDER_MESSAGE)
+
                         questionImage.config(image=pixelVirtual)
+
+                        imageThread = threading.Thread(target=receiveImage, daemon=True, args=())
+                        imageThread.start()
 
                     else:
-                        qnaString = receivedMessage[len(QUESTION_MESSAGE):]
-                        questionImage.config(image=pixelVirtual)
 
-                    qnaList = qnaString.split(DIVIDER_MESSAGE)
+                        questionImage.config(image=pixelVirtual)
+                        qnaString = receivedMessage[len(QUESTION_MESSAGE):]
+                        qnaList = qnaString.split(DIVIDER_MESSAGE)
+
+                    
 
                     setCountDown(qnaList[0])
 
@@ -276,7 +304,8 @@ def listenToServer():
 
                     continue
 
-        except Exception:
+        except Exception as e:
+            print(e)
             server.close()
             connected = False
             addToNetworkInfo("Disconnected From Server \n")
@@ -307,10 +336,8 @@ clientWindow.attributes('-topmost', 0)
 clientWindow.title("TriviaGame Client")
 
 iconphotoimage = ImageTk.PhotoImage(Image.open(ICONPATH))
-checkmarkimage = ImageTk.PhotoImage(Image.open(
-    CHECKMARKPATH).resize((200, 200), Image.Resampling.LANCZOS))
-crossimage = ImageTk.PhotoImage(Image.open(
-    CROSSPATH).resize((200, 200), Image.Resampling.LANCZOS))
+checkmarkimage = ImageTk.PhotoImage(Image.open(CHECKMARKPATH).resize((200, 200), Image.Resampling.LANCZOS))
+crossimage = ImageTk.PhotoImage(Image.open(CROSSPATH).resize((200, 200), Image.Resampling.LANCZOS))
 
 pixelVirtual = tkinter.PhotoImage(width=1, height=1)
 clientWindow.iconphoto(False, iconphotoimage)
@@ -357,14 +384,10 @@ questionText.place(x=10, y=15)
 questionImage.place(x=580, y=15)
 
 
-ans1button = tkinter.Button(answerFrame, command=lambda: answerChoosen(
-    1), bg="#e51537", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
-ans2button = tkinter.Button(answerFrame, command=lambda: answerChoosen(
-    2), bg="#0565d1", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
-ans3button = tkinter.Button(answerFrame, command=lambda: answerChoosen(
-    3), bg="#d99f00", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
-ans4button = tkinter.Button(answerFrame, command=lambda: answerChoosen(
-    4), bg="#229000", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
+ans1button = tkinter.Button(answerFrame, command=lambda: answerChoosen(1), bg="#e51537", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
+ans2button = tkinter.Button(answerFrame, command=lambda: answerChoosen(2), bg="#0565d1", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
+ans3button = tkinter.Button(answerFrame, command=lambda: answerChoosen(3), bg="#d99f00", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
+ans4button = tkinter.Button(answerFrame, command=lambda: answerChoosen(4), bg="#229000", text="", state="disabled", width=ANSWERBUTTONWIDTH, height=ANSWERBUTTONHEIGHT)
 
 countdownLabel = tkinter.Label(
     answerFrame, text="offline", width=25, height=1, bg="#171717", fg="white")
@@ -376,41 +399,34 @@ ans4button.place(x=465, y=170)
 
 countdownLabel.place(x=350, y=10)
 
-networkInfo = tkinter.Text(networkFrame, width=40,
-                           height=35, state="disabled", fg="white", bg="black")
+networkInfo = tkinter.Text(networkFrame, width=40, height=35, state="disabled", fg="white", bg="black")
 
 networkInfo.place(x=10, y=15)
 
-PublicMessageLabel = tkinter.Label(informationFrame, text="Public Message:",
-                                   width=20, height=1, bg="#404040", fg="white", anchor=tkinter.W)
+PublicMessageLabel = tkinter.Label(informationFrame, text="Public Message:", width=20, height=1, bg="#404040", fg="white", anchor=tkinter.W)
 EnterPublicMessage = tkinter.Entry(informationFrame, width=42)
 PublicMessageLabel.place(x=10, y=2)
 EnterPublicMessage.place(x=10, y=25)
 
-SendPublicMessageButton = tkinter.Button(
-    informationFrame, text="send", command=sendPublicMessage, state="disabled", width=8, height=0)
+SendPublicMessageButton = tkinter.Button(informationFrame, text="send", command=sendPublicMessage, state="disabled", width=8, height=0)
 SendPublicMessageButton.place(x=270, y=22)
 
-NameLabel = tkinter.Label(informationFrame, text="Name:", width=5,
-                          height=1, bg="#404040", fg="white", anchor=tkinter.W)
+NameLabel = tkinter.Label(informationFrame, text="Name:", width=5, height=1, bg="#404040", fg="white", anchor=tkinter.W)
 EnterName = tkinter.Entry(informationFrame, width=16)
 NameLabel.place(x=10, y=47)
 EnterName.place(x=10, y=70)
 
-IPLabel = tkinter.Label(informationFrame, text="Ip Adress:",
-                        width=8, height=1, bg="#404040", fg="white", anchor=tkinter.W)
+IPLabel = tkinter.Label(informationFrame, text="Ip Adress:", width=8, height=1, bg="#404040", fg="white", anchor=tkinter.W)
 EnterIP = tkinter.Entry(informationFrame, width=16)
 IPLabel.place(x=112, y=47)
 EnterIP.place(x=112, y=70)
 
-PortLabel = tkinter.Label(informationFrame, text="Port:", width=5,
-                          height=1, bg="#404040", fg="white", anchor=tkinter.W)
+PortLabel = tkinter.Label(informationFrame, text="Port:", width=5, height=1, bg="#404040", fg="white", anchor=tkinter.W)
 EnterPort = tkinter.Entry(informationFrame, width=8)
 PortLabel.place(x=214, y=47)
 EnterPort.place(x=214, y=70)
 
-EnterInformationButton = tkinter.Button(
-    informationFrame, text="join", command=joinServer, width=8, height=0)
+EnterInformationButton = tkinter.Button(informationFrame, text="join", command=joinServer, width=8, height=0)
 EnterInformationButton.place(x=270, y=67)
 
 clientWindow.mainloop()

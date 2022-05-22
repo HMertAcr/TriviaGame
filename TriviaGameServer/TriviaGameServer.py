@@ -6,10 +6,10 @@ import tkinter
 from PIL import Image, ImageTk
 
 HEADER = 64
+imageBuffer = 2048
 FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "Disconnect"
 GAMESTARTED_MESSAGE = "Game Already Started"
-ImageSend_Message = "Incoming Image"
 ASKFORDISCONNECT_MESSAGE = "Exit Game"
 PLAYERNAME_MESSAGE = "Player Name:"
 QUESTION_MESSAGE = "Question: "
@@ -38,10 +38,14 @@ def sendConnectionMessage(msg, connection):
     connection.send(encodedMsg)
 
 
-def sendConnectionImage(image, connection):
-    sendConnectionMessage(ImageSend_Message)
-
-    # do magic
+def sendImage(imagepath):
+    f=open(imagepath,"rb")
+    data = f.read(imageBuffer)
+    while (data):
+        if(udpServer.sendto(data,SERVERADDR)):
+            data = f.read(imageBuffer)
+            time.sleep(0.0005)
+    f.close()
 
 
 def recieveMessageFromConnection(connection):
@@ -82,7 +86,7 @@ def readFile(path):
             if line.startswith(QUESTIONHASIMAGE_MESSAGE):
                 newQnAList.append(line[len(QUESTIONHASIMAGE_MESSAGE):].strip())
                 newQhasImage = True
-                newQImagePath = file.readline()
+                newQImagePath = file.readline().strip()
             else:
                 newQnAList.append(line.strip())
                 newQhasImage = False
@@ -277,10 +281,6 @@ class Player:
             addToNetworkInfo(f"Sent {msg} to {self.playerID} \n")
             sendConnectionMessage(msg, self.playerConnection)
 
-    def sendImage(self, image):
-        if self.connected:
-            sendConnectionImage(image, self.playerConnection)
-
     def sendQuestion(self, question):
 
         shuffledAnswers = question.getAnswersInRandom()
@@ -291,6 +291,10 @@ class Player:
         if question.hasImage:
             self.sendMessage(QUESTION_MESSAGE + QUESTIONHASIMAGE_MESSAGE + str(timeForQuestions) + DIVIDER_MESSAGE + question.Question + DIVIDER_MESSAGE +
                              shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
+
+            imageThread = threading.Thread(target=sendImage, daemon=True, args=(question.imagepath,))
+            imageThread.start()
+
         else:
             self.sendMessage(QUESTION_MESSAGE + str(timeForQuestions) + DIVIDER_MESSAGE + question.Question + DIVIDER_MESSAGE +
                              shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
@@ -327,6 +331,7 @@ def startServer():
     global SERVERPORT
     global SERVERADDR
     global server
+    global udpServer
     SERVERIP = EnterIP.get()
     SERVERPORT = EnterPort.get()
 
@@ -336,6 +341,7 @@ def startServer():
         SERVERPORT = int(SERVERPORT)
         SERVERADDR = (SERVERIP, SERVERPORT)
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        udpServer = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         server.bind(SERVERADDR)
     except ValueError:
         addToNetworkInfo("Inputs Invalid \n")
@@ -345,8 +351,7 @@ def startServer():
         addToNetworkInfo(f"Server started {SERVERIP}:{SERVERPORT} \n")
         StartServerButton.config(state=tkinter.DISABLED)
         StartGameButton.config(state=tkinter.NORMAL)
-        listenForNewPlayersThread = threading.Thread(
-            target=listenForNewPlayers, daemon=True, args=())
+        listenForNewPlayersThread = threading.Thread(target=listenForNewPlayers, daemon=True, args=())
         listenForNewPlayersThread.start()
 
 
@@ -400,32 +405,26 @@ iconphotoimage = ImageTk.PhotoImage(Image.open(ICONPATH))
 serverWindow.iconphoto(False, iconphotoimage)
 serverWindow.iconbitmap(default=ICONPATH)
 
-networkInfo = tkinter.Text(serverWindow, width=40,
-                           height=35, bg="black", fg="white")
+networkInfo = tkinter.Text(serverWindow, width=40, height=35, bg="black", fg="white")
 networkInfo.config(state=tkinter.DISABLED)
 networkInfo.place(x=10, y=10)
 
-IPLabel = tkinter.Label(serverWindow, text="Ip Adress:", width=8,
-                        height=1, bg="#404040", fg="white", anchor=tkinter.W)
+IPLabel = tkinter.Label(serverWindow, text="Ip Adress:", width=8, height=1, bg="#404040", fg="white", anchor=tkinter.W)
 EnterIP = tkinter.Entry(serverWindow, width=16)
 IPLabel.place(x=24, y=580)
 EnterIP.place(x=24, y=603)
 EnterIP.insert(tkinter.END, socket.gethostbyname(socket.gethostname()))
 
-PortLabel = tkinter.Label(serverWindow, text="Port:", width=5,
-                          height=1, bg="#404040", fg="white", anchor=tkinter.W)
+PortLabel = tkinter.Label(serverWindow, text="Port:", width=5, height=1, bg="#404040", fg="white", anchor=tkinter.W)
 EnterPort = tkinter.Entry(serverWindow, width=8)
 PortLabel.place(x=129, y=580)
 EnterPort.place(x=129, y=603)
 
-StartServerButton = tkinter.Button(
-    serverWindow, text="start", command=startServer, width=8, height=0)
+StartServerButton = tkinter.Button(serverWindow, text="start", command=startServer, width=8, height=0)
 StartServerButton.place(x=186, y=600)
 
-StartGameButton = tkinter.Button(serverWindow, text="play", command=lambda: threading.Thread(
-    target=startGame, daemon=True, args=()).start(), state="disabled", width=8, height=0)
+StartGameButton = tkinter.Button(serverWindow, text="play", command=lambda: threading.Thread(target=startGame, daemon=True, args=()).start(), state="disabled", width=8, height=0)
 StartGameButton.place(x=255, y=600)
-
 
 def on_closing():
     try:
@@ -434,7 +433,6 @@ def on_closing():
         pass
     serverWindow.destroy()
     quit()
-
 
 serverWindow.protocol("WM_DELETE_WINDOW", on_closing)
 

@@ -1,18 +1,19 @@
 Config:
 
-Question time = 10
-Time between questions = 3
+Question time = 15
+Time between questions = 5
 
 Questions:
 
-!IMAGE How many sides does a Dodecahedron have?:
-imagePath
+!IMAGE How many sides does a Dodecahedron have?
+dist/img/deathloop.jpg
 12
 24
 20
 24
 
-What is the worlds fastest species of bird?:
+!IMAGE What is the worlds fastest species of bird?
+dist/img/vangogh.jpg
 Peregrine falcon
 Golden eagle
 Frigatebird
