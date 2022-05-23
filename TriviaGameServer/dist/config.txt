@@ -6,14 +6,14 @@ Time between questions = 5
 Questions:
 
 !IMAGE How many sides does a Dodecahedron have?
-dist/img/deathloop.jpg
+dist/img/vangogh.jpg
 12
 24
 20
 24
 
 !IMAGE What is the worlds fastest species of bird?
-dist/img/vangogh.jpg
+dist/img/deathloop.jpg
 Peregrine falcon
 Golden eagle
 Frigatebird

@@ -171,7 +171,17 @@ def receiveImage():
 
             f.close()
             global receivedImage
-            receivedImage = ImageTk.PhotoImage(Image.open(receivedImagePath).resize((250, 250), Image.Resampling.BILINEAR))
+            maxWidth = 280
+            maxHeight = 352
+
+            pillowImage = Image.open(receivedImagePath)
+
+            imageWidth, imageHeight = pillowImage.size
+
+            ratio = min(maxWidth/imageWidth, maxHeight/imageHeight)
+
+            pillowImage = pillowImage.resize((int(ratio*imageWidth), int(ratio*imageHeight)), Image.Resampling.LANCZOS)
+            receivedImage = ImageTk.PhotoImage(pillowImage)
             questionImage.config(image=receivedImage)
 
     except socket.timeout:
@@ -181,7 +191,7 @@ def receiveImage():
 def listenToServer():
     global connected
     while connected:
-        try:
+        # try:
             msg_lenght = server.recv(HEADER).decode(FORMAT)
 
             if msg_lenght:
@@ -233,23 +243,26 @@ def listenToServer():
                     break
 
                 if receivedMessage.startswith(QUESTION_MESSAGE):
-                    if receivedMessage.startswith(QUESTIONHASIMAGE_MESSAGE, len(QUESTION_MESSAGE)):
-                        qnaString = receivedMessage[len(QUESTION_MESSAGE) + len(QUESTIONHASIMAGE_MESSAGE):]
-                        
-                        qnaList = qnaString.split(DIVIDER_MESSAGE)
-
-                        questionImage.config(image=pixelVirtual)
-
-                        receiveImage()
-
-                    else:
-
-                        questionImage.config(image=pixelVirtual)
-                        qnaString = receivedMessage[len(QUESTION_MESSAGE):]
-                        qnaList = qnaString.split(DIVIDER_MESSAGE)
 
                     
 
+                    if receivedMessage.startswith(QUESTIONHASIMAGE_MESSAGE, len(QUESTION_MESSAGE)):
+                        qnaString = receivedMessage[len(QUESTION_MESSAGE) + len(QUESTIONHASIMAGE_MESSAGE):]
+
+                        waitForImage = True
+                        
+                        qnaList = qnaString.split(DIVIDER_MESSAGE)
+
+                    else:
+                        waitForImage = False
+                        qnaString = receivedMessage[len(QUESTION_MESSAGE):]
+                        qnaList = qnaString.split(DIVIDER_MESSAGE)
+
+                    questionImage.config(image=pixelVirtual)
+
+                    if waitForImage:
+                        receiveImage()
+                    
                     setCountDown(qnaList[0])
 
                     changeQuestionTextBox(qnaList[1])
@@ -303,20 +316,20 @@ def listenToServer():
 
                     continue
 
-        except Exception as e:
-            print(e)
-            server.close()
-            connected = False
-            addToNetworkInfo("Disconnected From Server \n")
-            EnterInformationButton.config(state=tkinter.NORMAL)
-            SendPublicMessageButton.config(state=tkinter.DISABLED)
-            changeQuestionTextBox("")
-            ans1button.config(text="", state="disabled")
-            ans2button.config(text="", state="disabled")
-            ans3button.config(text="", state="disabled")
-            ans4button.config(text="", state="disabled")
-            questionImage.config(image=pixelVirtual)
-            break
+        # except Exception as e:
+        #     print(e)
+        #     server.close()
+        #     connected = False
+        #     addToNetworkInfo("Disconnected From Server \n")
+        #     EnterInformationButton.config(state=tkinter.NORMAL)
+        #     SendPublicMessageButton.config(state=tkinter.DISABLED)
+        #     changeQuestionTextBox("")
+        #     ans1button.config(text="", state="disabled")
+        #     ans2button.config(text="", state="disabled")
+        #     ans3button.config(text="", state="disabled")
+        #     ans4button.config(text="", state="disabled")
+        #     questionImage.config(image=pixelVirtual)
+        #     break
 
 
 windowWIDTH = 1225
@@ -372,11 +385,9 @@ networkFrame.place(x=5*(windowWIDTH)/7, y=0)
 informationFrame.place(x=5*(windowWIDTH)/7, y=17*(windowHEIGHT)/20)
 
 
-questionText = tkinter.Text(questionFrame, width=70,
-                            height=22, state="disabled", bg="black", fg="white")
+questionText = tkinter.Text(questionFrame, width=70,height=22, state="disabled", bg="black", fg="white")
 
-questionImage = tkinter.Label(
-    questionFrame, image=pixelVirtual, width=280, height=352, bg="black", fg="white")
+questionImage = tkinter.Label(questionFrame, image=pixelVirtual, width=280, height=352, bg="black", fg="white")
 
 
 questionText.place(x=10, y=15)
