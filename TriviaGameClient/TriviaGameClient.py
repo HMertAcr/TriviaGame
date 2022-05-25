@@ -1,3 +1,4 @@
+from logging import exception
 import socket
 import time
 import threading
@@ -33,8 +34,7 @@ def addToNetworkInfo(text):
 
 def addToNetworkInfoWithColor(text, color):
     networkInfo.config(state=tkinter.NORMAL)
-    networkInfo.tag_config(
-        "colored" + networkInfo.index('end'), foreground=color)
+    networkInfo.tag_config("colored" + networkInfo.index('end'), foreground=color)
     networkInfo.insert(tkinter.END, text, "colored" + networkInfo.index('end'))
     networkInfo.config(state=tkinter.DISABLED)
     clientWindow.update_idletasks()
@@ -132,8 +132,7 @@ def joinServer():
         sendMessageToServer(PlayerName)
         addToNetworkInfo(f"Connected to {SERVERIP}:{SERVERPORT} \n")
         setCountDownString("online")
-        listenToServerThread = threading.Thread(
-            target=listenToServer, daemon=True, args=())
+        listenToServerThread = threading.Thread(target=listenToServer, daemon=True, args=())
         listenToServerThread.start()
         EnterInformationButton.config(state=tkinter.DISABLED)
         SendPublicMessageButton.config(state=tkinter.NORMAL)
@@ -158,6 +157,7 @@ def sendPublicMessage():
 
 def receiveImage():
     try:
+        addToNetworkInfo("Receiving Image... \n")
         udpServer.settimeout(0.1)
         data = udpServer.recvfrom(imageBuffer)[0]
         receivedImagePath=(f"dist/img/currentQuestion.jpg")
@@ -184,14 +184,17 @@ def receiveImage():
             receivedImage = ImageTk.PhotoImage(pillowImage)
             questionImage.config(image=receivedImage)
 
+            addToNetworkInfo("Image Received \n")
+
     except socket.timeout:
+        addToNetworkInfo("No Image To Receive \n")
         pass
 
 
 def listenToServer():
     global connected
     while connected:
-        # try:
+        try:
             msg_lenght = server.recv(HEADER).decode(FORMAT)
 
             if msg_lenght:
@@ -316,20 +319,19 @@ def listenToServer():
 
                     continue
 
-        # except Exception as e:
-        #     print(e)
-        #     server.close()
-        #     connected = False
-        #     addToNetworkInfo("Disconnected From Server \n")
-        #     EnterInformationButton.config(state=tkinter.NORMAL)
-        #     SendPublicMessageButton.config(state=tkinter.DISABLED)
-        #     changeQuestionTextBox("")
-        #     ans1button.config(text="", state="disabled")
-        #     ans2button.config(text="", state="disabled")
-        #     ans3button.config(text="", state="disabled")
-        #     ans4button.config(text="", state="disabled")
-        #     questionImage.config(image=pixelVirtual)
-        #     break
+        except:
+            server.close()
+            connected = False
+            addToNetworkInfo("Disconnected From Server \n")
+            EnterInformationButton.config(state=tkinter.NORMAL)
+            SendPublicMessageButton.config(state=tkinter.DISABLED)
+            changeQuestionTextBox("")
+            ans1button.config(text="", state="disabled")
+            ans2button.config(text="", state="disabled")
+            ans3button.config(text="", state="disabled")
+            ans4button.config(text="", state="disabled")
+            questionImage.config(image=pixelVirtual)
+            break
 
 
 windowWIDTH = 1225
@@ -341,10 +343,8 @@ CHECKMARKPATH = r"dist\checkMark.png"
 CROSSPATH = r"dist\cross.png"
 clientWindow = tkinter.Tk()
 clientWindow.geometry(f"{windowWIDTH}x{windowHEIGHT}+50+50")
-clientWindow.configure(bg="#141414")
-clientWindow.resizable(False, False)
-clientWindow.attributes('-topmost', 1)
-clientWindow.attributes('-topmost', 0)
+clientWindow.configure(bg="#404040")
+# clientWindow.resizable(False, False)
 clientWindow.title("TriviaGame Client")
 
 iconphotoimage = ImageTk.PhotoImage(Image.open(ICONPATH))
@@ -369,14 +369,10 @@ def on_closing():
 clientWindow.protocol("WM_DELETE_WINDOW", on_closing)
 
 
-questionFrame = tkinter.Frame(
-    clientWindow, bg="#404040", width=5*(windowWIDTH)/7, height=4*(windowHEIGHT)/7)
-answerFrame = tkinter.Frame(
-    clientWindow, bg="#171717", width=5*(windowWIDTH)/7, height=3*(windowHEIGHT)/7)
-networkFrame = tkinter.Frame(
-    clientWindow, bg="#404040", width=2*(windowWIDTH)/7, height=17*(windowHEIGHT)/20)
-informationFrame = tkinter.Frame(
-    clientWindow, bg="#404040", width=2*(windowWIDTH)/7, height=3*(windowHEIGHT)/20)
+questionFrame = tkinter.Frame(clientWindow, bg="#404040", width=5*(windowWIDTH)/7, height=4*(windowHEIGHT)/7)
+answerFrame = tkinter.Frame(clientWindow, bg="#171717", width=5*(windowWIDTH)/7, height=3*(windowHEIGHT)/7)
+networkFrame = tkinter.Frame(clientWindow, bg="#404040", width=2*(windowWIDTH)/7, height=17*(windowHEIGHT)/20)
+informationFrame = tkinter.Frame(clientWindow, bg="#404040", width=2*(windowWIDTH)/7, height=3*(windowHEIGHT)/20)
 
 
 questionFrame.place(x=0, y=0)

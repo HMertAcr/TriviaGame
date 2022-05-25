@@ -20,7 +20,7 @@ ANSWERTOQUESTION_MESSAGE = "!ANSWER: "
 ISANSWERCORRECT_MESSAGE = "!ISCORRECT: "
 GAMESTATS_MESSAGE = "!STATS: "
 PUBLIC_MESSAGE = "!PUBLICMESSAGE: "
-configPath = r"dist\config.txt"
+configPath = "dist\config.txt"
 gameStarted = False
 
 
@@ -40,6 +40,7 @@ def sendConnectionMessage(msg, connection):
 
 
 def sendImage(imagepath):
+    addToNetworkInfo("Sending Image... \n")
     f=open(imagepath,"rb")
     data = f.read(imageBuffer)
     while (data):
@@ -47,7 +48,7 @@ def sendImage(imagepath):
             data = f.read(imageBuffer)
             time.sleep(0.0001)
     f.close()
-
+    addToNetworkInfo("Image Sent \n")
 
 def recieveMessageFromConnection(connection):
     msg_lenght = connection.recv(HEADER).decode(FORMAT)
@@ -222,8 +223,7 @@ class Player:
         self.currentQuestion = ""
         self.isAnswerCorrect = False
         self.score = 0
-        self.listeningThread = threading.Thread(
-            target=self.Listen, daemon=True, args=())
+        self.listeningThread = threading.Thread(target=self.Listen, daemon=True, args=())
         self.connected = True
         self.startListening()
         self.messageList = []
@@ -244,17 +244,14 @@ class Player:
                 if receivedMessage == DISCONNECT_MESSAGE:
                     self.playerConnection.close()
                     self.connected = False
-                    addToNetworkInfo(
-                        f"{self.playerID} Disconnected From Server \n")
+                    addToNetworkInfo(f"{self.playerID} Disconnected From Server \n")
                     time.sleep(2)
                     break
 
                 if receivedMessage.startswith(ANSWERTOQUESTION_MESSAGE):
                     if isinstance(self.currentQuestion, Question):
-                        Answer = receivedMessage[len(
-                            ANSWERTOQUESTION_MESSAGE):]
-                        addToNetworkInfo(
-                            f"{self.playerID} answered {Answer} \n")
+                        Answer = receivedMessage[len(ANSWERTOQUESTION_MESSAGE):]
+                        addToNetworkInfo(f"{self.playerID} answered {Answer} \n")
                         if Answer == self.currentQuestion.Answers[0]:
                             self.score = self.score + 1
                             self.isAnswerCorrect = True
@@ -265,8 +262,7 @@ class Player:
                 if receivedMessage.startswith(PUBLIC_MESSAGE):
                     receivedPublicMessage = receivedMessage[len(
                         PUBLIC_MESSAGE):]
-                    playerList.sendAllPlayers(
-                        PUBLIC_MESSAGE+self.playerColor+DIVIDER_MESSAGE+self.playerID+": "+receivedPublicMessage)
+                    playerList.sendAllPlayers(PUBLIC_MESSAGE+self.playerColor+DIVIDER_MESSAGE+self.playerID+": "+receivedPublicMessage)
 
     def disconnect(self):
         self.sendMessage(ASKFORDISCONNECT_MESSAGE)
@@ -397,8 +393,7 @@ ICONPATH = r"dist\TriviaGameIcon.ico"
 serverWindow = tkinter.Tk()
 serverWindow.geometry(f"{windowWidth}x{windowHeight}+40+40")
 serverWindow.configure(bg="#404040")
-serverWindow.attributes('-topmost', 1)
-serverWindow.attributes('-topmost', 0)
+# clientWindow.resizable(False, False)
 serverWindow.title("TriviaGame Server")
 
 iconphotoimage = ImageTk.PhotoImage(Image.open(ICONPATH))
