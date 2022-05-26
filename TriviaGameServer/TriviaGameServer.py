@@ -6,10 +6,10 @@ import tkinter
 from PIL import Image, ImageTk
 
 HEADER = 64
+imageBuffer = 2048
 FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "Disconnect"
 GAMESTARTED_MESSAGE = "Game Already Started"
-ImageSend_Message = "Incoming Image"
 ASKFORDISCONNECT_MESSAGE = "Exit Game"
 PLAYERNAME_MESSAGE = "Player Name:"
 QUESTION_MESSAGE = "Question: "
@@ -19,7 +19,7 @@ ANSWERTOQUESTION_MESSAGE = "!ANSWER: "
 ISANSWERCORRECT_MESSAGE = "!ISCORRECT: "
 GAMESTATS_MESSAGE = "!STATS: "
 PUBLIC_MESSAGE = "!PUBLICMESSAGE: "
-configPath = r"dist\config.txt"
+configPath = "dist\config.txt"
 gameStarted = False
 
 
@@ -38,11 +38,16 @@ def sendConnectionMessage(msg, connection):
     connection.send(encodedMsg)
 
 
-def sendConnectionImage(image, connection):
-    sendConnectionMessage(ImageSend_Message)
-
-    # do magic
-
+def sendImage(imagepath):
+    addToNetworkInfo("Sending Image... \n")
+    f=open(imagepath,"rb")
+    data = f.read(imageBuffer)
+    while (data):
+        if(udpServer.sendto(data,SERVERADDR)):
+            data = f.read(imageBuffer)
+            time.sleep(0.0001)
+    f.close()
+    addToNetworkInfo("Image Sent \n")
 
 def recieveMessageFromConnection(connection):
     msg_lenght = connection.recv(HEADER).decode(FORMAT)
@@ -82,7 +87,7 @@ def readFile(path):
             if line.startswith(QUESTIONHASIMAGE_MESSAGE):
                 newQnAList.append(line[len(QUESTIONHASIMAGE_MESSAGE):].strip())
                 newQhasImage = True
-                newQImagePath = file.readline()
+                newQImagePath = file.readline().strip()
             else:
                 newQnAList.append(line.strip())
                 newQhasImage = False
@@ -106,20 +111,27 @@ def readFile(path):
 def getConfig(configList):
     configurations = []
 
-    defaultQuestionTime = 20
-    defaultTimeBetweenQuestions = 5
+    default_QuestionTime = 20
+    default_TimeBetweenQuestions = 5
+    default_RandomizeQuestionOrder = False
 
-    configurations.append(defaultQuestionTime)
-    configurations.append(defaultTimeBetweenQuestions)
+    configurations.append(default_QuestionTime)
+    configurations.append(default_TimeBetweenQuestions)
+    configurations.append(default_RandomizeQuestionOrder)
 
     for config in configList:
         config = config.split("=")
         config[0] = config[0].strip()
         config[1] = config[1].strip()
-        if config[0] == "Question time":
+        if config[0] == "Question_time":
             configurations[0] = int(config[1])
-        if config[0] == "Time between questions":
+        if config[0] == "Time_between_questions":
             configurations[1] = int(config[1])
+        if config[0] == "Randomize_question_order":
+            if config[1] == "True":
+                configurations[2] = True
+            if config[1] == "False":
+                configurations[2] = False
 
     return configurations
 
@@ -129,8 +141,10 @@ class QuestionList:
     def __init__(self, QuestionDataList):
         self.qList = []
         for QuestionData in QuestionDataList:
-            self.qList.append(
-                Question(QuestionData[0], QuestionData[1], QuestionData[2]))
+            self.qList.append(Question(QuestionData[0], QuestionData[1], QuestionData[2]))
+
+    def randomizeQuestionOrder(self):
+        random.shuffle(self.qList)
 
 
 class Question:
@@ -217,8 +231,7 @@ class Player:
         self.currentQuestion = ""
         self.isAnswerCorrect = False
         self.score = 0
-        self.listeningThread = threading.Thread(
-            target=self.Listen, daemon=True, args=())
+        self.listeningThread = threading.Thread(target=self.Listen, daemon=True, args=())
         self.connected = True
         self.startListening()
         self.messageList = []
@@ -239,17 +252,14 @@ class Player:
                 if receivedMessage == DISCONNECT_MESSAGE:
                     self.playerConnection.close()
                     self.connected = False
-                    addToNetworkInfo(
-                        f"{self.playerID} Disconnected From Server \n")
+                    addToNetworkInfo(f"{self.playerID} Disconnected From Server \n")
                     time.sleep(2)
                     break
 
                 if receivedMessage.startswith(ANSWERTOQUESTION_MESSAGE):
                     if isinstance(self.currentQuestion, Question):
-                        Answer = receivedMessage[len(
-                            ANSWERTOQUESTION_MESSAGE):]
-                        addToNetworkInfo(
-                            f"{self.playerID} answered {Answer} \n")
+                        Answer = receivedMessage[len(ANSWERTOQUESTION_MESSAGE):]
+                        addToNetworkInfo(f"{self.playerID} answered {Answer} \n")
                         if Answer == self.currentQuestion.Answers[0]:
                             self.score = self.score + 1
                             self.isAnswerCorrect = True
@@ -260,8 +270,7 @@ class Player:
                 if receivedMessage.startswith(PUBLIC_MESSAGE):
                     receivedPublicMessage = receivedMessage[len(
                         PUBLIC_MESSAGE):]
-                    playerList.sendAllPlayers(
-                        PUBLIC_MESSAGE+self.playerColor+DIVIDER_MESSAGE+self.playerID+": "+receivedPublicMessage)
+                    playerList.sendAllPlayers(PUBLIC_MESSAGE+self.playerColor+DIVIDER_MESSAGE+self.playerID+": "+receivedPublicMessage)
 
     def disconnect(self):
         self.sendMessage(ASKFORDISCONNECT_MESSAGE)
@@ -277,10 +286,6 @@ class Player:
             addToNetworkInfo(f"Sent {msg} to {self.playerID} \n")
             sendConnectionMessage(msg, self.playerConnection)
 
-    def sendImage(self, image):
-        if self.connected:
-            sendConnectionImage(image, self.playerConnection)
-
     def sendQuestion(self, question):
 
         shuffledAnswers = question.getAnswersInRandom()
@@ -291,6 +296,9 @@ class Player:
         if question.hasImage:
             self.sendMessage(QUESTION_MESSAGE + QUESTIONHASIMAGE_MESSAGE + str(timeForQuestions) + DIVIDER_MESSAGE + question.Question + DIVIDER_MESSAGE +
                              shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
+
+            sendImage(question.imagepath)
+
         else:
             self.sendMessage(QUESTION_MESSAGE + str(timeForQuestions) + DIVIDER_MESSAGE + question.Question + DIVIDER_MESSAGE +
                              shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
@@ -319,14 +327,16 @@ def listenForNewPlayers():
 FileData = readFile(configPath)
 questionList = QuestionList(FileData[1])
 playerList = PlayerList()
-timeForQuestions, timeBetweenQuestions = getConfig(FileData[0])
-
+timeForQuestions, timeBetweenQuestions, ifrandomizeQuestionOrder = getConfig(FileData[0])
+if ifrandomizeQuestionOrder:
+    questionList.randomizeQuestionOrder()
 
 def startServer():
     global SERVERIP
     global SERVERPORT
     global SERVERADDR
     global server
+    global udpServer
     SERVERIP = EnterIP.get()
     SERVERPORT = EnterPort.get()
 
@@ -336,6 +346,7 @@ def startServer():
         SERVERPORT = int(SERVERPORT)
         SERVERADDR = (SERVERIP, SERVERPORT)
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        udpServer = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         server.bind(SERVERADDR)
     except ValueError:
         addToNetworkInfo("Inputs Invalid \n")
@@ -345,8 +356,7 @@ def startServer():
         addToNetworkInfo(f"Server started {SERVERIP}:{SERVERPORT} \n")
         StartServerButton.config(state=tkinter.DISABLED)
         StartGameButton.config(state=tkinter.NORMAL)
-        listenForNewPlayersThread = threading.Thread(
-            target=listenForNewPlayers, daemon=True, args=())
+        listenForNewPlayersThread = threading.Thread(target=listenForNewPlayers, daemon=True, args=())
         listenForNewPlayersThread.start()
 
 
@@ -387,45 +397,38 @@ def startGame():
 
 windowWidth = 345
 windowHeight = 640
-ICONPATH = r"dist\TriviaGameIcon.ico"
+ICONPATH = "dist\ServerIcon.ico"
 
 serverWindow = tkinter.Tk()
 serverWindow.geometry(f"{windowWidth}x{windowHeight}+40+40")
 serverWindow.configure(bg="#404040")
-serverWindow.attributes('-topmost', 1)
-serverWindow.attributes('-topmost', 0)
+# clientWindow.resizable(False, False)
 serverWindow.title("TriviaGame Server")
 
 iconphotoimage = ImageTk.PhotoImage(Image.open(ICONPATH))
 serverWindow.iconphoto(False, iconphotoimage)
 serverWindow.iconbitmap(default=ICONPATH)
 
-networkInfo = tkinter.Text(serverWindow, width=40,
-                           height=35, bg="black", fg="white")
+networkInfo = tkinter.Text(serverWindow, width=40, height=35, bg="black", fg="white")
 networkInfo.config(state=tkinter.DISABLED)
 networkInfo.place(x=10, y=10)
 
-IPLabel = tkinter.Label(serverWindow, text="Ip Adress:", width=8,
-                        height=1, bg="#404040", fg="white", anchor=tkinter.W)
+IPLabel = tkinter.Label(serverWindow, text="Ip Adress:", width=8, height=1, bg="#404040", fg="white", anchor=tkinter.W)
 EnterIP = tkinter.Entry(serverWindow, width=16)
 IPLabel.place(x=24, y=580)
 EnterIP.place(x=24, y=603)
 EnterIP.insert(tkinter.END, socket.gethostbyname(socket.gethostname()))
 
-PortLabel = tkinter.Label(serverWindow, text="Port:", width=5,
-                          height=1, bg="#404040", fg="white", anchor=tkinter.W)
+PortLabel = tkinter.Label(serverWindow, text="Port:", width=5, height=1, bg="#404040", fg="white", anchor=tkinter.W)
 EnterPort = tkinter.Entry(serverWindow, width=8)
 PortLabel.place(x=129, y=580)
 EnterPort.place(x=129, y=603)
 
-StartServerButton = tkinter.Button(
-    serverWindow, text="start", command=startServer, width=8, height=0)
+StartServerButton = tkinter.Button(serverWindow, text="start", command=startServer, width=8, height=0)
 StartServerButton.place(x=186, y=600)
 
-StartGameButton = tkinter.Button(serverWindow, text="play", command=lambda: threading.Thread(
-    target=startGame, daemon=True, args=()).start(), state="disabled", width=8, height=0)
+StartGameButton = tkinter.Button(serverWindow, text="play", command=lambda: threading.Thread(target=startGame, daemon=True, args=()).start(), state="disabled", width=8, height=0)
 StartGameButton.place(x=255, y=600)
-
 
 def on_closing():
     try:
@@ -434,7 +437,6 @@ def on_closing():
         pass
     serverWindow.destroy()
     quit()
-
 
 serverWindow.protocol("WM_DELETE_WINDOW", on_closing)
 
