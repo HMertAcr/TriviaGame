@@ -1,9 +1,9 @@
-from logging import exception
 import socket
 import time
 import threading
 import random
 import tkinter
+from io import BytesIO
 from PIL import Image, ImageTk
 
 HEADER = 64
@@ -160,21 +160,19 @@ def receiveImage():
         addToNetworkInfo("Receiving Image... \n")
         udpServer.settimeout(0.1)
         data = udpServer.recvfrom(imageBuffer)[0]
-        receivedImagePath=(f"dist/img/currentQuestion.jpg")
-        f = open(receivedImagePath,'wb')
+        f = BytesIO(data)
         try:
             while(data):
                 f.write(data)
                 udpServer.settimeout(0.1)
                 data = udpServer.recvfrom(imageBuffer)[0]
         except socket.timeout:
-
-            f.close()
             global receivedImage
             maxWidth = 280
             maxHeight = 352
 
-            pillowImage = Image.open(receivedImagePath)
+            f.seek(0)
+            pillowImage = Image.open(f)
 
             imageWidth, imageHeight = pillowImage.size
 
@@ -188,7 +186,6 @@ def receiveImage():
 
     except socket.timeout:
         addToNetworkInfo("No Image To Receive \n")
-        pass
 
 
 def listenToServer():
@@ -338,9 +335,9 @@ windowWIDTH = 1225
 windowHEIGHT = 700
 ANSWERBUTTONHEIGHT = 6
 ANSWERBUTTONWIDTH = 50
-ICONPATH = r"dist\TriviaGameIcon.ico"
-CHECKMARKPATH = r"dist\checkMark.png"
-CROSSPATH = r"dist\cross.png"
+ICONPATH = "dist\ClientIcon.ico"
+CHECKMARKPATH = "dist\checkMark.png"
+CROSSPATH = "dist\cross.png"
 clientWindow = tkinter.Tk()
 clientWindow.geometry(f"{windowWIDTH}x{windowHEIGHT}+50+50")
 clientWindow.configure(bg="#404040")

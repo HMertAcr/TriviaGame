@@ -1,19 +1,26 @@
 Config:
 
-Question time = 15
-Time between questions = 5
+Question_time = 15
+Time_between_questions = 5
+Randomize_question_order = False
 
 Questions:
 
-!IMAGE How many sides does a Dodecahedron have?
-dist/img/vangogh.jpg
+How many sides does a Dodecahedron have?
 12
 24
 20
 24
 
+!IMAGE Who is the painter of this famous painting?
+dist/img/vangogh.jpg
+Vincent van Gogh
+Claude Monet
+Michelangelo
+Leonardo da Vinci
+
 !IMAGE What is the worlds fastest species of bird?
-dist/img/deathloop.jpg
+dist/img/PeregrineFalcon.jpg
 Peregrine falcon
 Golden eagle
 Frigatebird

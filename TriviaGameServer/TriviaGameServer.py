@@ -4,7 +4,6 @@ import threading
 import random
 import tkinter
 from PIL import Image, ImageTk
-import timeit
 
 HEADER = 64
 imageBuffer = 2048
@@ -112,20 +111,27 @@ def readFile(path):
 def getConfig(configList):
     configurations = []
 
-    defaultQuestionTime = 20
-    defaultTimeBetweenQuestions = 5
+    default_QuestionTime = 20
+    default_TimeBetweenQuestions = 5
+    default_RandomizeQuestionOrder = False
 
-    configurations.append(defaultQuestionTime)
-    configurations.append(defaultTimeBetweenQuestions)
+    configurations.append(default_QuestionTime)
+    configurations.append(default_TimeBetweenQuestions)
+    configurations.append(default_RandomizeQuestionOrder)
 
     for config in configList:
         config = config.split("=")
         config[0] = config[0].strip()
         config[1] = config[1].strip()
-        if config[0] == "Question time":
+        if config[0] == "Question_time":
             configurations[0] = int(config[1])
-        if config[0] == "Time between questions":
+        if config[0] == "Time_between_questions":
             configurations[1] = int(config[1])
+        if config[0] == "Randomize_question_order":
+            if config[1] == "True":
+                configurations[2] = True
+            if config[1] == "False":
+                configurations[2] = False
 
     return configurations
 
@@ -135,8 +141,10 @@ class QuestionList:
     def __init__(self, QuestionDataList):
         self.qList = []
         for QuestionData in QuestionDataList:
-            self.qList.append(
-                Question(QuestionData[0], QuestionData[1], QuestionData[2]))
+            self.qList.append(Question(QuestionData[0], QuestionData[1], QuestionData[2]))
+
+    def randomizeQuestionOrder(self):
+        random.shuffle(self.qList)
 
 
 class Question:
@@ -319,8 +327,9 @@ def listenForNewPlayers():
 FileData = readFile(configPath)
 questionList = QuestionList(FileData[1])
 playerList = PlayerList()
-timeForQuestions, timeBetweenQuestions = getConfig(FileData[0])
-
+timeForQuestions, timeBetweenQuestions, ifrandomizeQuestionOrder = getConfig(FileData[0])
+if ifrandomizeQuestionOrder:
+    questionList.randomizeQuestionOrder()
 
 def startServer():
     global SERVERIP
@@ -388,7 +397,7 @@ def startGame():
 
 windowWidth = 345
 windowHeight = 640
-ICONPATH = r"dist\TriviaGameIcon.ico"
+ICONPATH = "dist\ServerIcon.ico"
 
 serverWindow = tkinter.Tk()
 serverWindow.geometry(f"{windowWidth}x{windowHeight}+40+40")
