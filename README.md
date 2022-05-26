@@ -2,8 +2,8 @@
 
 CMP2204 Project
 
-Could be better if:
+To Do:
 
-images
+Fix connection error
 
-use udp for server to all players messages
+Fix Icon Size
