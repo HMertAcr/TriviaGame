@@ -241,36 +241,39 @@ class Player:
 
     def Listen(self):
         while self.connected:
-            msg_lenght = self.playerConnection.recv(HEADER).decode(FORMAT)
-            if msg_lenght:
-                msg_lenght = int(msg_lenght)
-                receivedMessage = self.playerConnection.recv(
-                    msg_lenght).decode(FORMAT)
+            try:
+                msg_lenght = self.playerConnection.recv(HEADER).decode(FORMAT)
+            except:
+                pass
+            else:
+                if msg_lenght:
+                    msg_lenght = int(msg_lenght)
+                    receivedMessage = self.playerConnection.recv(
+                        msg_lenght).decode(FORMAT)
 
-                self.messageList.append(receivedMessage)
+                    self.messageList.append(receivedMessage)
 
-                if receivedMessage == DISCONNECT_MESSAGE:
-                    self.playerConnection.close()
-                    self.connected = False
-                    addToNetworkInfo(f"{self.playerID} Disconnected From Server \n")
-                    time.sleep(2)
-                    break
+                    if receivedMessage == DISCONNECT_MESSAGE:
+                        self.playerConnection.close()
+                        self.connected = False
+                        addToNetworkInfo(f"{self.playerID} Disconnected From Server \n")
+                        time.sleep(2)
+                        break
 
-                if receivedMessage.startswith(ANSWERTOQUESTION_MESSAGE):
-                    if isinstance(self.currentQuestion, Question):
-                        Answer = receivedMessage[len(ANSWERTOQUESTION_MESSAGE):]
-                        addToNetworkInfo(f"{self.playerID} answered {Answer} \n")
-                        if Answer == self.currentQuestion.Answers[0]:
-                            self.score = self.score + 1
-                            self.isAnswerCorrect = True
-                        else:
-                            self.isAnswerCorrect = False
-                    continue
+                    if receivedMessage.startswith(ANSWERTOQUESTION_MESSAGE):
+                        if isinstance(self.currentQuestion, Question):
+                            Answer = receivedMessage[len(ANSWERTOQUESTION_MESSAGE):]
+                            addToNetworkInfo(f"{self.playerID} answered {Answer} \n")
+                            if Answer == self.currentQuestion.Answers[0]:
+                                self.score = self.score + 1
+                                self.isAnswerCorrect = True
+                            else:
+                                self.isAnswerCorrect = False
+                        continue
 
-                if receivedMessage.startswith(PUBLIC_MESSAGE):
-                    receivedPublicMessage = receivedMessage[len(
-                        PUBLIC_MESSAGE):]
-                    playerList.sendAllPlayers(PUBLIC_MESSAGE+self.playerColor+DIVIDER_MESSAGE+self.playerID+": "+receivedPublicMessage)
+                    if receivedMessage.startswith(PUBLIC_MESSAGE):
+                        receivedPublicMessage = receivedMessage[len(PUBLIC_MESSAGE):]
+                        playerList.sendAllPlayers(PUBLIC_MESSAGE+self.playerColor+DIVIDER_MESSAGE+self.playerID+": "+receivedPublicMessage)
 
     def disconnect(self):
         self.sendMessage(ASKFORDISCONNECT_MESSAGE)
