@@ -310,14 +310,11 @@ def listenForNewPlayers():
         while True:
             (newPlayerConnection, PlayerAddress) = server.accept()
             if not gameStarted:
-                newPlayerName = recieveMessageFromConnection(
-                    newPlayerConnection)
-                playerList.add(Player(newPlayerConnection,
-                               PlayerAddress, newPlayerName))
+                newPlayerName = recieveMessageFromConnection(newPlayerConnection)
+                playerList.add(Player(newPlayerConnection,PlayerAddress, newPlayerName))
                 addToNetworkInfo(f"{playerList.PList[-1].playerID} Joined \n")
             else:
-                rejectedPlayerName = recieveMessageFromConnection(
-                    newPlayerConnection)
+                rejectedPlayerName = recieveMessageFromConnection(newPlayerConnection)
                 sendConnectionMessage(GAMESTARTED_MESSAGE, newPlayerConnection)
                 newPlayerConnection.close()
     except:
