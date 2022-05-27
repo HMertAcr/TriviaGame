@@ -123,9 +123,8 @@ def joinServer():
 
         addToNetworkInfo("Inputs Invalid \n")
 
-    except Exception as e:
+    except:
 
-        print(e)
         addToNetworkInfo(f"Couldnt connect to {SERVERIP}:{SERVERPORT} \n")
 
     else:
