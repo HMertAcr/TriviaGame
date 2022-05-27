@@ -117,14 +117,15 @@ def joinServer():
         SERVERADDR = (SERVERIP, SERVERPORT)
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         udpServer = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        udpServer.bind(SERVERADDR)
+        udpServer.bind(("",SERVERPORT)) 
         server.connect(SERVERADDR)
     except ValueError:
 
         addToNetworkInfo("Inputs Invalid \n")
 
-    except:
+    except Exception as e:
 
+        print(e)
         addToNetworkInfo(f"Couldnt connect to {SERVERIP}:{SERVERPORT} \n")
 
     else:
