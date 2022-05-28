@@ -117,14 +117,15 @@ def joinServer():
         SERVERADDR = (SERVERIP, SERVERPORT)
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         udpServer = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        udpServer.bind(("",SERVERPORT)) 
         server.connect(SERVERADDR)
+        udpServer.bind(("",SERVERPORT))
     except ValueError:
 
         addToNetworkInfo("Inputs Invalid \n")
 
-    except:
+    except Exception as e:
 
+        print(e)
         addToNetworkInfo(f"Couldnt connect to {SERVERIP}:{SERVERPORT} \n")
 
     else:
@@ -158,13 +159,13 @@ def sendPublicMessage():
 def receiveImage():
     try:
         addToNetworkInfo("Receiving Image... \n")
-        udpServer.settimeout(0.1)
+        udpServer.settimeout(0.5)
         data = udpServer.recvfrom(imageBuffer)[0]
         f = BytesIO(data)
         try:
             while(data):
                 f.write(data)
-                udpServer.settimeout(0.1)
+                udpServer.settimeout(0.2)
                 data = udpServer.recvfrom(imageBuffer)[0]
         except socket.timeout:
             global receivedImage

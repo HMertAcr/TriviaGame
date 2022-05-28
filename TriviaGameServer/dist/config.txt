@@ -6,18 +6,18 @@ Randomize_question_order = False
 
 Questions:
 
-How many sides does a Dodecahedron have?
-12
-24
-20
-24
-
 !IMAGE Who is the painter of this famous painting?
 dist/img/vangogh.jpg
 Vincent van Gogh
 Claude Monet
 Michelangelo
 Leonardo da Vinci
+
+How many sides does a Dodecahedron have?
+12
+24
+20
+24
 
 !IMAGE What is the worlds fastest species of bird?
 dist/img/PeregrineFalcon.jpg
