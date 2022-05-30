@@ -103,7 +103,6 @@ def joinServer():
     global SERVERPORT
     global SERVERADDR
     global server
-    global udpServer
     global listenToServerThread
 
     PlayerName = EnterName.get()
@@ -116,9 +115,7 @@ def joinServer():
         SERVERPORT = int(SERVERPORT)
         SERVERADDR = (SERVERIP, SERVERPORT)
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        udpServer = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         server.connect(SERVERADDR)
-        udpServer.bind(("",SERVERPORT))
     except ValueError:
 
         addToNetworkInfo("Inputs Invalid \n")
@@ -157,36 +154,33 @@ def sendPublicMessage():
         addToNetworkInfo("Not connected to server \n")
 
 def receiveImage():
-    try:
-        addToNetworkInfo("Receiving Image... \n")
-        udpServer.settimeout(0.5)
-        data = udpServer.recvfrom(imageBuffer)[0]
-        f = BytesIO(data)
-        try:
-            while(data):
-                f.write(data)
-                udpServer.settimeout(0.2)
-                data = udpServer.recvfrom(imageBuffer)[0]
-        except socket.timeout:
-            global receivedImage
-            maxWidth = 280
-            maxHeight = 352
+    addToNetworkInfo("Receiving Image... \n")
 
-            f.seek(0)
-            pillowImage = Image.open(f)
+    data = server.recv(imageBuffer)
+    f = BytesIO(data)
 
-            imageWidth, imageHeight = pillowImage.size
+    while data:
+        data = server.recv(imageBuffer)
+        f.write(data)
 
-            ratio = min(maxWidth/imageWidth, maxHeight/imageHeight)
+    sendMessageToServer("RECEIVEDIMAGE", server)
 
-            pillowImage = pillowImage.resize((int(ratio*imageWidth), int(ratio*imageHeight)), Image.Resampling.LANCZOS)
-            receivedImage = ImageTk.PhotoImage(pillowImage)
-            questionImage.config(image=receivedImage)
+    global receivedImage
+    maxWidth = 280
+    maxHeight = 352
 
-            addToNetworkInfo("Image Received \n")
+    f.seek(0)
+    pillowImage = Image.open(f)
 
-    except socket.timeout:
-        addToNetworkInfo("No Image To Receive \n")
+    imageWidth, imageHeight = pillowImage.size
+
+    ratio = min(maxWidth/imageWidth, maxHeight/imageHeight)
+
+    pillowImage = pillowImage.resize((int(ratio*imageWidth), int(ratio*imageHeight)), Image.Resampling.LANCZOS)
+    receivedImage = ImageTk.PhotoImage(pillowImage)
+    questionImage.config(image=receivedImage)
+
+    addToNetworkInfo("Image Received \n")
 
 
 def listenToServer():

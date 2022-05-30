@@ -28,7 +28,6 @@ def addToNetworkInfo(text):
     networkInfo.insert(tkinter.END, text)
     networkInfo.config(state=tkinter.DISABLED)
 
-
 def sendConnectionMessage(msg, connection):
     encodedMsg = msg.encode(FORMAT)
     msg_length = len(encodedMsg)
@@ -37,17 +36,31 @@ def sendConnectionMessage(msg, connection):
     connection.send(send_length)
     connection.send(encodedMsg)
 
+def sendConnectionImage(imagepath, connection):
+        addToNetworkInfo("Sending Image... \n")
 
-def sendImage(imagepath):
-    addToNetworkInfo("Sending Image... \n")
-    f=open(imagepath,"rb")
-    data = f.read(imageBuffer)
-    while (data):
-        if(udpServer.sendto(data,SERVERADDR)):
-            data = f.read(imageBuffer)
-            time.sleep(0.0001)
-    f.close()
-    addToNetworkInfo("Image Sent \n")
+        f=open(imagepath,"rb")
+
+        data = f.read(imageBuffer)
+        while data:
+            if(len(data)<imageBuffer):
+                connection.send(data + b' ' * (imageBuffer-len(data)))
+            else:
+                connection.send(data)
+                data = f.read(imageBuffer)
+        
+        while True:
+            connectionResponse = recieveMessageFromConnection(connection)
+
+            if connectionResponse == "RECEIVEDIMAGE":
+                addToNetworkInfo("Image Sent \n")
+                break
+
+        
+
+
+
+
 
 def recieveMessageFromConnection(connection):
     msg_lenght = connection.recv(HEADER).decode(FORMAT)
@@ -55,7 +68,6 @@ def recieveMessageFromConnection(connection):
         msg_lenght = int(msg_lenght)
         receivedMessage = connection.recv(msg_lenght).decode(FORMAT)
         return receivedMessage
-
 
 def readFile(path):
 
@@ -107,7 +119,6 @@ def readFile(path):
         FileData.append(QuestionData)
     return FileData
 
-
 def getConfig(configList):
     configurations = []
 
@@ -135,7 +146,6 @@ def getConfig(configList):
 
     return configurations
 
-
 class QuestionList:
 
     def __init__(self, QuestionDataList):
@@ -145,7 +155,6 @@ class QuestionList:
 
     def randomizeQuestionOrder(self):
         random.shuffle(self.qList)
-
 
 class Question:
 
@@ -160,7 +169,6 @@ class Question:
     def getAnswersInRandom(self):
         shuffledAnswers = random.sample(self.Answers, len(self.Answers))
         return shuffledAnswers
-
 
 class PlayerList:
 
@@ -218,7 +226,6 @@ class PlayerList:
 
     def clear(self):
         self.PList = []
-
 
 class Player:
 
@@ -289,6 +296,10 @@ class Player:
             addToNetworkInfo(f"Sent {msg} to {self.playerID} \n")
             sendConnectionMessage(msg, self.playerConnection)
 
+    def sendImage(self, imagepath):
+        if self.connected:
+            sendConnectionImage(imagepath, self.playerConnection)
+
     def sendQuestion(self, question):
 
         shuffledAnswers = question.getAnswersInRandom()
@@ -300,12 +311,11 @@ class Player:
             self.sendMessage(QUESTION_MESSAGE + QUESTIONHASIMAGE_MESSAGE + str(timeForQuestions) + DIVIDER_MESSAGE + question.Question + DIVIDER_MESSAGE +
                              shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
 
-            sendImage(question.imagepath)
+            self.sendImage(question.imagepath)
 
         else:
             self.sendMessage(QUESTION_MESSAGE + str(timeForQuestions) + DIVIDER_MESSAGE + question.Question + DIVIDER_MESSAGE +
                              shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
-
 
 def listenForNewPlayers():
     try:
@@ -323,7 +333,6 @@ def listenForNewPlayers():
     except:
         pass
 
-
 FileData = readFile(configPath)
 questionList = QuestionList(FileData[1])
 playerList = PlayerList()
@@ -336,7 +345,6 @@ def startServer():
     global SERVERPORT
     global SERVERADDR
     global server
-    global udpServer
     SERVERIP = EnterIP.get()
     SERVERPORT = EnterPort.get()
 
@@ -346,7 +354,6 @@ def startServer():
         SERVERPORT = int(SERVERPORT)
         SERVERADDR = (SERVERIP, SERVERPORT)
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        udpServer = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         server.bind(SERVERADDR)
     except ValueError:
         addToNetworkInfo("Inputs Invalid \n")
@@ -358,7 +365,6 @@ def startServer():
         StartGameButton.config(state=tkinter.NORMAL)
         listenForNewPlayersThread = threading.Thread(target=listenForNewPlayers, daemon=True, args=())
         listenForNewPlayersThread.start()
-
 
 def startGame():
 
@@ -393,7 +399,6 @@ def startGame():
     else:
         addToNetworkInfo("No Current Players \n")
         gameStarted = False
-
 
 windowWidth = 345
 windowHeight = 640
