@@ -2,8 +2,5 @@
 
 CMP2204 Project
 
-To Do:
-
-Fix connection error
-
-Fix Icon Size
+Setup Google Drive Link:
+https://drive.google.com/drive/folders/1SaKDdQMrtPS-qh2Ij0IKtCyT5T_2ryJh
