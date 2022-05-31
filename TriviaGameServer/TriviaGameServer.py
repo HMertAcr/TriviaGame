@@ -1,3 +1,4 @@
+from calendar import c
 import socket
 import time
 import threading
@@ -6,7 +7,7 @@ import tkinter
 from PIL import Image, ImageTk
 
 HEADER = 64
-imageBuffer = 2048
+imageBuffer = 1024
 FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "Disconnect"
 GAMESTARTED_MESSAGE = "Game Already Started"
@@ -37,29 +38,17 @@ def sendConnectionMessage(msg, connection):
     connection.send(encodedMsg)
 
 def sendConnectionImage(imagepath, connection):
-        addToNetworkInfo("Sending Image... \n")
+    addToNetworkInfo("Sending Image... \n")
 
-        f=open(imagepath,"rb")
-
+    f = open(imagepath, "rb")
+    while True:
         data = f.read(imageBuffer)
-        while data:
-            if(len(data)<imageBuffer):
-                connection.send(data + b' ' * (imageBuffer-len(data)))
-            else:
-                connection.send(data)
-                data = f.read(imageBuffer)
-        
-        while True:
-            connectionResponse = recieveMessageFromConnection(connection)
 
-            if connectionResponse == "RECEIVEDIMAGE":
-                addToNetworkInfo("Image Sent \n")
-                break
-
-        
-
-
-
+        if not data:
+            addToNetworkInfo("Image Sent \n")
+            f.close()
+            break
+        connection.send(data)
 
 
 def recieveMessageFromConnection(connection):
@@ -308,14 +297,12 @@ class Player:
         self.isAnswerCorrect = False
 
         if question.hasImage:
-            self.sendMessage(QUESTION_MESSAGE + QUESTIONHASIMAGE_MESSAGE + str(timeForQuestions) + DIVIDER_MESSAGE + question.Question + DIVIDER_MESSAGE +
-                             shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
+            self.sendMessage(QUESTION_MESSAGE + QUESTIONHASIMAGE_MESSAGE + str(timeForQuestions) + DIVIDER_MESSAGE + question.Question + DIVIDER_MESSAGE + shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
 
             self.sendImage(question.imagepath)
 
         else:
-            self.sendMessage(QUESTION_MESSAGE + str(timeForQuestions) + DIVIDER_MESSAGE + question.Question + DIVIDER_MESSAGE +
-                             shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
+            self.sendMessage(QUESTION_MESSAGE + str(timeForQuestions) + DIVIDER_MESSAGE + question.Question + DIVIDER_MESSAGE + shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
 
 def listenForNewPlayers():
     try:

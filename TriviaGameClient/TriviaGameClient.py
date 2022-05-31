@@ -154,32 +154,25 @@ def sendPublicMessage():
         addToNetworkInfo("Not connected to server \n")
 
 def receiveImage():
+    pass
     addToNetworkInfo("Receiving Image... \n")
-
-    data = server.recv(imageBuffer)
-    f = BytesIO(data)
-
-    while data:
+    f = BytesIO()
+    while True:
         data = server.recv(imageBuffer)
+        if len(data)<imageBuffer:
+            f.write(data)
+            break
         f.write(data)
-
-    sendMessageToServer("RECEIVEDIMAGE", server)
-
     global receivedImage
     maxWidth = 280
     maxHeight = 352
-
     f.seek(0)
     pillowImage = Image.open(f)
-
     imageWidth, imageHeight = pillowImage.size
-
     ratio = min(maxWidth/imageWidth, maxHeight/imageHeight)
-
     pillowImage = pillowImage.resize((int(ratio*imageWidth), int(ratio*imageHeight)), Image.Resampling.LANCZOS)
     receivedImage = ImageTk.PhotoImage(pillowImage)
     questionImage.config(image=receivedImage)
-
     addToNetworkInfo("Image Received \n")
 
 
@@ -257,6 +250,7 @@ def listenToServer():
 
                     if waitForImage:
                         receiveImage()
+
                     
                     setCountDown(qnaList[0])
 
@@ -311,7 +305,8 @@ def listenToServer():
 
                     continue
 
-        except:
+        except Exception as e:
+            print(e)
             server.close()
             connected = False
             addToNetworkInfo("Disconnected From Server \n")
