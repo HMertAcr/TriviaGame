@@ -159,7 +159,7 @@ def receiveImage():
     f = BytesIO()
     while True:
         data = server.recv(imageBuffer)
-        if len(data)<imageBuffer:
+        if (not data) or len(data)<imageBuffer:
             f.write(data)
             break
         f.write(data)
