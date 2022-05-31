@@ -155,19 +155,20 @@ def sendPublicMessage():
 def receiveImage():
     addToNetworkInfo("Receiving Image... \n")
 
+    msg_lenght = server.recv(HEADER).decode(FORMAT)
+    msg_lenght = int(msg_lenght)
+    receivedMessage = server.recv(msg_lenght).decode(FORMAT)
+    sizeOfImage = int(receivedMessage)
+
+    currentSize = 0
+
     f = BytesIO()
-    f2= open(f"output.jpg", "wb")
     while True:
         data = server.recv(imageBuffer)
-        
-        if data == b'\x09'*imageBuffer:
-            break
-
+        currentSize += len(data)
         f.write(data)
-        f2.write(data)
-
-
-    f2.close()
+        if currentSize==sizeOfImage:
+            break
 
     global receivedImage
     maxWidth = 280
