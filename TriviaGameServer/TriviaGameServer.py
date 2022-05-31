@@ -1,5 +1,6 @@
-from calendar import c
+import os
 import socket
+import string
 import time
 import threading
 import random
@@ -40,13 +41,15 @@ def sendConnectionMessage(msg, connection):
 def sendConnectionImage(imagepath, connection):
     addToNetworkInfo("Sending Image... \n")
 
+    sizeOfImage = os.path.getsize(imagepath)
+    sendConnectionMessage(str(sizeOfImage),connection)
+
     f = open(imagepath, "rb")
     while True:
         data = f.read(imageBuffer)
-
         if not data:
             addToNetworkInfo("Image Sent \n")
-            connection.send(b'\x09'*imageBuffer)
+            time.sleep(1000)
             f.close()
             break
         connection.send(data)
