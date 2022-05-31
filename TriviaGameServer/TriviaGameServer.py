@@ -7,7 +7,7 @@ import tkinter
 from PIL import Image, ImageTk
 
 HEADER = 64
-imageBuffer = 1024
+imageBuffer = 2048
 FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "Disconnect"
 GAMESTARTED_MESSAGE = "Game Already Started"
@@ -46,10 +46,10 @@ def sendConnectionImage(imagepath, connection):
 
         if not data:
             addToNetworkInfo("Image Sent \n")
+            connection.send(b'\x09'*imageBuffer)
             f.close()
             break
         connection.send(data)
-
 
 def recieveMessageFromConnection(connection):
     msg_lenght = connection.recv(HEADER).decode(FORMAT)
@@ -244,8 +244,7 @@ class Player:
             else:
                 if msg_lenght:
                     msg_lenght = int(msg_lenght)
-                    receivedMessage = self.playerConnection.recv(
-                        msg_lenght).decode(FORMAT)
+                    receivedMessage = self.playerConnection.recv(msg_lenght).decode(FORMAT)
 
                     self.messageList.append(receivedMessage)
 

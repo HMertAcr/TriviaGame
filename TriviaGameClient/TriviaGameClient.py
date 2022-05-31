@@ -135,7 +135,6 @@ def joinServer():
         EnterInformationButton.config(state=tkinter.DISABLED)
         SendPublicMessageButton.config(state=tkinter.NORMAL)
 
-
 def sendMessageToServer(msg):
     if(connected):
         encodedMsg = msg.encode(FORMAT)
@@ -154,20 +153,19 @@ def sendPublicMessage():
         addToNetworkInfo("Not connected to server \n")
 
 def receiveImage():
-    pass
     addToNetworkInfo("Receiving Image... \n")
 
     f = BytesIO()
     f2= open(f"output.jpg", "wb")
     while True:
         data = server.recv(imageBuffer)
-
-        if data:
-            f.write(data)
-            f2.write(data)
-
-        if (not data) or (len(data)<imageBuffer):
+        
+        if data == b'\x09'*imageBuffer:
             break
+
+        f.write(data)
+        f2.write(data)
+
 
     f2.close()
 
