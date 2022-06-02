@@ -189,10 +189,14 @@ class PlayerList:
         self.PList.append(player)
 
     def removeDisconnected(self):
+        to_delete = []
         for i in range(len(self.PList)):
             if not self.PList[i].connected:
-                del self.PList[i]
-                i = i-1
+                to_delete.append(i)
+
+        for i in to_delete[::-1]:
+            self.PList.pop(i)
+
 
     def sortByScores(self):
         for i in range(len(self.PList)):
@@ -374,7 +378,6 @@ def startGame():
         time.sleep(5)
 
         playerList.disconnectAllPlayers()
-        playerList.removeDisconnected()
         playerList.clear()
         server.close()
 
