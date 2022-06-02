@@ -206,8 +206,8 @@ class PlayerList:
 
     def sendPlayerScores(self):
         self.sortByScores()
-
-        self.PList[0].sendMessage(GAMESTATS_MESSAGE + "1" + DIVIDER_MESSAGE + str(len(self.PList)) + DIVIDER_MESSAGE + str(self.PList[0].score))
+        if len(self.PList) > 0:
+            self.PList[0].sendMessage(GAMESTATS_MESSAGE + "1" + DIVIDER_MESSAGE + str(len(self.PList)) + DIVIDER_MESSAGE + str(self.PList[0].score))
 
         placement = 1
 
