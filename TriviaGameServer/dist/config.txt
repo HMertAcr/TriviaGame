@@ -17,7 +17,7 @@ How many sides does a Dodecahedron have?
 12
 24
 20
-24
+18
 
 !IMAGE What is the worlds fastest species of bird?
 dist/img/PeregrineFalcon.jpg

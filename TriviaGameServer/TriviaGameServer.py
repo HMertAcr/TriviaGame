@@ -1,3 +1,4 @@
+import os
 import socket
 import time
 import threading
@@ -8,26 +9,26 @@ from PIL import Image, ImageTk
 HEADER = 64
 imageBuffer = 2048
 FORMAT = "utf-8"
-DISCONNECT_MESSAGE = "Disconnect"
-GAMESTARTED_MESSAGE = "Game Already Started"
-ASKFORDISCONNECT_MESSAGE = "Exit Game"
-PLAYERNAME_MESSAGE = "Player Name:"
-QUESTION_MESSAGE = "Question: "
+DISCONNECT_MESSAGE = "!Disconnect"
+GAMESTARTED_MESSAGE = "!Game Already Started"
+ASKFORDISCONNECT_MESSAGE = "!Exit Game"
+PLAYERNAME_MESSAGE = "!Player Name:"
+QUESTION_MESSAGE = "!Question: "
+ANSWERTIME_MESSAGE = "!TimeGiven:"
 DIVIDER_MESSAGE = "!!!"
 QUESTIONHASIMAGE_MESSAGE = "!IMAGE "
 ANSWERTOQUESTION_MESSAGE = "!ANSWER: "
-ISANSWERCORRECT_MESSAGE = "!ISCORRECT: "
+CORRECTANSWER_MESSAGE = "!CORRECTANSWER: "
 GAMESTATS_MESSAGE = "!STATS: "
 PUBLIC_MESSAGE = "!PUBLICMESSAGE: "
+
 configPath = "dist\config.txt"
 gameStarted = False
-
 
 def addToNetworkInfo(text):
     networkInfo.config(state=tkinter.NORMAL)
     networkInfo.insert(tkinter.END, text)
     networkInfo.config(state=tkinter.DISABLED)
-
 
 def sendConnectionMessage(msg, connection):
     encodedMsg = msg.encode(FORMAT)
@@ -37,17 +38,20 @@ def sendConnectionMessage(msg, connection):
     connection.send(send_length)
     connection.send(encodedMsg)
 
-
-def sendImage(imagepath):
+def sendConnectionImage(imagepath, connection):
     addToNetworkInfo("Sending Image... \n")
-    f=open(imagepath,"rb")
-    data = f.read(imageBuffer)
-    while (data):
-        if(udpServer.sendto(data,SERVERADDR)):
-            data = f.read(imageBuffer)
-            time.sleep(0.0001)
-    f.close()
-    addToNetworkInfo("Image Sent \n")
+
+    sizeOfImage = os.path.getsize(imagepath)
+    sendConnectionMessage(str(sizeOfImage),connection)
+
+    f = open(imagepath, "rb")
+    while True:
+        data = f.read(imageBuffer)
+        if not data:
+            addToNetworkInfo("Image Sent \n")
+            f.close()
+            break
+        connection.send(data)
 
 def recieveMessageFromConnection(connection):
     msg_lenght = connection.recv(HEADER).decode(FORMAT)
@@ -55,7 +59,6 @@ def recieveMessageFromConnection(connection):
         msg_lenght = int(msg_lenght)
         receivedMessage = connection.recv(msg_lenght).decode(FORMAT)
         return receivedMessage
-
 
 def readFile(path):
 
@@ -107,7 +110,6 @@ def readFile(path):
         FileData.append(QuestionData)
     return FileData
 
-
 def getConfig(configList):
     configurations = []
 
@@ -135,7 +137,6 @@ def getConfig(configList):
 
     return configurations
 
-
 class QuestionList:
 
     def __init__(self, QuestionDataList):
@@ -145,7 +146,6 @@ class QuestionList:
 
     def randomizeQuestionOrder(self):
         random.shuffle(self.qList)
-
 
 class Question:
 
@@ -161,7 +161,6 @@ class Question:
         shuffledAnswers = random.sample(self.Answers, len(self.Answers))
         return shuffledAnswers
 
-
 class PlayerList:
 
     def __init__(self):
@@ -171,13 +170,15 @@ class PlayerList:
         for player in self.PList:
             player.sendMessage(msg)
 
-    def sendAllPlayersQuestion(self, question):
+    def sendAllPlayersQuestion(self, question, answerTime):
         for player in self.PList:
             player.sendQuestion(question)
-
-    def sendAllPlayersIfCorrect(self):
         for player in self.PList:
-            player.sendIfCorrect()
+            player.sendAnswerTime(answerTime)
+    
+    def sendAllPlayersCorrectAnswer(self):
+        for player in self.PList:
+            player.sendCorrectAnswer()
 
     def disconnectAllPlayers(self):
         for player in self.PList:
@@ -196,29 +197,24 @@ class PlayerList:
         for i in range(len(self.PList)):
             for j in range(len(self.PList)-i-1):
                 if self.PList[j].score < self.PList[j+1].score:
-                    self.PList[j], self.PList[j +
-                                              1] = self.PList[j+1], self.PList[j]
+                    self.PList[j], self.PList[j+1] = self.PList[j+1], self.PList[j]
 
     def sendPlayerScores(self):
         self.sortByScores()
 
-        self.PList[0].sendMessage(GAMESTATS_MESSAGE + "1" + DIVIDER_MESSAGE + str(
-            len(self.PList)) + DIVIDER_MESSAGE + str(self.PList[0].score))
+        self.PList[0].sendMessage(GAMESTATS_MESSAGE + "1" + DIVIDER_MESSAGE + str(len(self.PList)) + DIVIDER_MESSAGE + str(self.PList[0].score))
 
         placement = 1
 
         for i in range(1, len(self.PList)):
             if self.PList[i].score == self.PList[i-1].score:
-                self.PList[i].sendMessage(GAMESTATS_MESSAGE + str(placement) + DIVIDER_MESSAGE + str(
-                    len(self.PList)) + DIVIDER_MESSAGE + str(self.PList[i].score))
+                self.PList[i].sendMessage(GAMESTATS_MESSAGE + str(placement) + DIVIDER_MESSAGE + str(len(self.PList)) + DIVIDER_MESSAGE + str(self.PList[i].score))
             else:
                 placement = i+1
-                self.PList[i].sendMessage(GAMESTATS_MESSAGE + str(placement) + DIVIDER_MESSAGE + str(
-                    len(self.PList)) + DIVIDER_MESSAGE + str(self.PList[i].score))
+                self.PList[i].sendMessage(GAMESTATS_MESSAGE + str(placement) + DIVIDER_MESSAGE + str(len(self.PList)) + DIVIDER_MESSAGE + str(self.PList[i].score))
 
     def clear(self):
         self.PList = []
-
 
 class Player:
 
@@ -234,7 +230,6 @@ class Player:
         self.listeningThread = threading.Thread(target=self.Listen, daemon=True, args=())
         self.connected = True
         self.startListening()
-        self.messageList = []
 
     def startListening(self):
         self.listeningThread.start()
@@ -248,10 +243,7 @@ class Player:
             else:
                 if msg_lenght:
                     msg_lenght = int(msg_lenght)
-                    receivedMessage = self.playerConnection.recv(
-                        msg_lenght).decode(FORMAT)
-
-                    self.messageList.append(receivedMessage)
+                    receivedMessage = self.playerConnection.recv(msg_lenght).decode(FORMAT)
 
                     if receivedMessage == DISCONNECT_MESSAGE:
                         self.playerConnection.close()
@@ -278,16 +270,17 @@ class Player:
     def disconnect(self):
         self.sendMessage(ASKFORDISCONNECT_MESSAGE)
 
-    def sendIfCorrect(self):
-        if self.isAnswerCorrect:
-            self.sendMessage(ISANSWERCORRECT_MESSAGE + "YES")
-        else:
-            self.sendMessage(ISANSWERCORRECT_MESSAGE + "NO")
+    def sendCorrectAnswer(self):
+        self.sendMessage(CORRECTANSWER_MESSAGE + self.currentQuestion.Answers[0])
 
     def sendMessage(self, msg):
         if self.connected:
             addToNetworkInfo(f"Sent {msg} to {self.playerID} \n")
             sendConnectionMessage(msg, self.playerConnection)
+
+    def sendImage(self, imagepath):
+        if self.connected:
+            sendConnectionImage(imagepath, self.playerConnection)
 
     def sendQuestion(self, question):
 
@@ -297,15 +290,16 @@ class Player:
         self.isAnswerCorrect = False
 
         if question.hasImage:
-            self.sendMessage(QUESTION_MESSAGE + QUESTIONHASIMAGE_MESSAGE + str(timeForQuestions) + DIVIDER_MESSAGE + question.Question + DIVIDER_MESSAGE +
-                             shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
+            self.sendMessage(QUESTION_MESSAGE + QUESTIONHASIMAGE_MESSAGE + question.Question + DIVIDER_MESSAGE + shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
 
-            sendImage(question.imagepath)
+            self.sendImage(question.imagepath)
 
         else:
-            self.sendMessage(QUESTION_MESSAGE + str(timeForQuestions) + DIVIDER_MESSAGE + question.Question + DIVIDER_MESSAGE +
-                             shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
+            self.sendMessage(QUESTION_MESSAGE + question.Question + DIVIDER_MESSAGE + shuffledAnswers[0] + DIVIDER_MESSAGE + shuffledAnswers[1] + DIVIDER_MESSAGE + shuffledAnswers[2] + DIVIDER_MESSAGE + shuffledAnswers[3])
 
+    def sendAnswerTime(self, AnswerTime):
+        self.sendMessage(ANSWERTIME_MESSAGE+str(AnswerTime))
+        pass
 
 def listenForNewPlayers():
     try:
@@ -323,11 +317,10 @@ def listenForNewPlayers():
     except:
         pass
 
-
 FileData = readFile(configPath)
-questionList = QuestionList(FileData[1])
 playerList = PlayerList()
 timeForQuestions, timeBetweenQuestions, ifrandomizeQuestionOrder = getConfig(FileData[0])
+questionList = QuestionList(FileData[1])
 if ifrandomizeQuestionOrder:
     questionList.randomizeQuestionOrder()
 
@@ -336,7 +329,6 @@ def startServer():
     global SERVERPORT
     global SERVERADDR
     global server
-    global udpServer
     SERVERIP = EnterIP.get()
     SERVERPORT = EnterPort.get()
 
@@ -346,7 +338,6 @@ def startServer():
         SERVERPORT = int(SERVERPORT)
         SERVERADDR = (SERVERIP, SERVERPORT)
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        udpServer = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         server.bind(SERVERADDR)
     except ValueError:
         addToNetworkInfo("Inputs Invalid \n")
@@ -359,20 +350,21 @@ def startServer():
         listenForNewPlayersThread = threading.Thread(target=listenForNewPlayers, daemon=True, args=())
         listenForNewPlayersThread.start()
 
-
 def startGame():
 
     global gameStarted
     gameStarted = True
+
+    StartGameButton.config(state=tkinter.DISABLED)
 
     playerList.removeDisconnected()
 
     if len(playerList.PList) > 0:
 
         for question in questionList.qList:
-            playerList.sendAllPlayersQuestion(question)
+            playerList.sendAllPlayersQuestion(question, timeForQuestions)
             time.sleep(timeForQuestions+1)
-            playerList.sendAllPlayersIfCorrect()
+            playerList.sendAllPlayersCorrectAnswer()
             time.sleep(timeBetweenQuestions)
 
         playerList.removeDisconnected()
@@ -380,20 +372,19 @@ def startGame():
 
         time.sleep(5)
 
-        playerList.removeDisconnected()
         playerList.disconnectAllPlayers()
+        playerList.removeDisconnected()
         playerList.clear()
         server.close()
-        gameStarted = False
 
         gameStarted = False
         StartServerButton.config(state=tkinter.NORMAL)
         StartGameButton.config(state=tkinter.DISABLED)
 
     else:
+        StartGameButton.config(state=tkinter.NORMAL)
         addToNetworkInfo("No Current Players \n")
         gameStarted = False
-
 
 windowWidth = 345
 windowHeight = 640
