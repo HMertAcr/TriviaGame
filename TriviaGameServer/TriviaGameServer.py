@@ -173,6 +173,7 @@ class PlayerList:
     def sendAllPlayersQuestion(self, question, answerTime):
         for player in self.PList:
             player.sendQuestion(question)
+        time.sleep(0.1)
         for player in self.PList:
             player.sendAnswerTime(answerTime)
     
