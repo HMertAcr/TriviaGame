@@ -355,6 +355,8 @@ def startGame():
     global gameStarted
     gameStarted = True
 
+    StartGameButton.config(state=tkinter.DISABLED)
+
     playerList.removeDisconnected()
 
     if len(playerList.PList) > 0:
@@ -370,17 +372,17 @@ def startGame():
 
         time.sleep(5)
 
-        playerList.removeDisconnected()
         playerList.disconnectAllPlayers()
+        playerList.removeDisconnected()
         playerList.clear()
         server.close()
-        gameStarted = False
 
         gameStarted = False
         StartServerButton.config(state=tkinter.NORMAL)
         StartGameButton.config(state=tkinter.DISABLED)
 
     else:
+        StartGameButton.config(state=tkinter.NORMAL)
         addToNetworkInfo("No Current Players \n")
         gameStarted = False
 

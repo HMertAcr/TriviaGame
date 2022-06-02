@@ -3,4 +3,4 @@
 CMP2204 Project
 
 Setup Google Drive Link:
-https://drive.google.com/drive/folders/1SaKDdQMrtPS-qh2Ij0IKtCyT5T_2ryJh
+https://drive.google.com/file/d/13eNT6TdoU181RHm676GcnSEN7Fgr_DQi/view?usp=sharing

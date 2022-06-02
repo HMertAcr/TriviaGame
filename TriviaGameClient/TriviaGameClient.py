@@ -69,7 +69,7 @@ def answerChoosen(answer):
 
     global currentAnswer
     
-    ans1button.config(bg="#c", state="disabled")
+    ans1button.config(bg="#404040", state="disabled")
     ans2button.config(bg="#404040", state="disabled")
     ans3button.config(bg="#404040", state="disabled")
     ans4button.config(bg="#404040", state="disabled")
@@ -161,7 +161,7 @@ def receiveImage():
         data = server.recv(imageBuffer)
         currentSize += len(data)
         f.write(data)
-        if currentSize==sizeOfImage:
+        if currentSize>=sizeOfImage:
             break
 
     global receivedImage
@@ -305,8 +305,20 @@ def listenToServer():
                 if receivedMessage.startswith(GAMESTATS_MESSAGE):
                     gameStats = receivedMessage[len(
                         GAMESTATS_MESSAGE):].split(DIVIDER_MESSAGE)
-                    setCountDownString("game over")
-                    changeQuestionTextBox(f"You came in {gameStats[0]}. place out of {gameStats[1]} players with {gameStats[2]} correct answers")
+                    setCountDownString("Game Over")
+
+                    if gameStats[0] == "1":
+                        gameStats[0] = "1st"
+                    else:
+                        if gameStats[0] == "2":
+                            gameStats[0] = "2nd"
+                        else:
+                            if gameStats[0] == "3":
+                                gameStats[0] = "3rd"
+                            else:
+                                gameStats[0] = gameStats[0] + "th"
+
+                    changeQuestionTextBox(f"You are {gameStats[0]} out of {gameStats[1]} players with {gameStats[2]} correct answers")
 
                     continue
 
