@@ -267,10 +267,16 @@ def listenToServer():
                     
                     global currentAnswer
                     
-                    ans1button.config(bg="#404040", state="disabled")
-                    ans2button.config(bg="#404040",state="disabled")
-                    ans3button.config(bg="#404040",state="disabled")
-                    ans4button.config(bg="#404040",state="disabled")
+                    if currentAnswer == "":
+                        ans1button.config(bg="#404040")
+                        ans2button.config(bg="#404040")
+                        ans3button.config(bg="#404040")
+                        ans4button.config(bg="#404040")
+
+                    ans1button.config(state="disabled")
+                    ans2button.config(state="disabled")
+                    ans3button.config(state="disabled")
+                    ans4button.config(state="disabled")
 
                     if correctAnswer == ans1button["text"]:
                         ans1button.config(bg="#40ac04")
